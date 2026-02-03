@@ -13,6 +13,10 @@ const parentSchema = new Schema(
       trim: true,
       maxlength: [255, 'Full name cannot exceed 255 characters'],
     },
+    avatarUrl: {
+      type: String,
+      trim: true,
+    },
     address: {
       type: String,
       trim: true,

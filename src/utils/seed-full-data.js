@@ -295,11 +295,13 @@ async function seedParents(users) {
         {
             userId: parentUsers[0]._id,
             fullName: 'Phạm Văn Cường',
+            avatarUrl: 'https://i.pravatar.cc/150?img=60',
             address: 'Quận 1, TP.HCM',
         },
         {
             userId: parentUsers[1]._id,
             fullName: 'Hoàng Thị Dung',
+            avatarUrl: 'https://i.pravatar.cc/150?img=49',
             address: 'Quận 3, TP.HCM',
         },
     ];
@@ -322,6 +324,7 @@ async function seedStudents(users, parents, grades) {
             userId: studentUsers[0]._id,
             parentId: parents[0]._id,
             fullName: 'Nguyễn Minh Anh',
+            avatarUrl: 'https://i.pravatar.cc/150?img=45',
             dateOfBirth: new Date('2008-04-15'),
             gender: Gender.FEMALE,
             grade: 'Lớp 11',
@@ -331,6 +334,7 @@ async function seedStudents(users, parents, grades) {
             userId: studentUsers[1]._id,
             parentId: parents[1]._id,
             fullName: 'Trần Hoàng Long',
+            avatarUrl: 'https://i.pravatar.cc/150?img=14',
             dateOfBirth: new Date('2007-09-20'),
             gender: Gender.MALE,
             grade: 'Lớp 12',

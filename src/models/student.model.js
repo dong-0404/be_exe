@@ -19,6 +19,10 @@ const studentSchema = new Schema(
       trim: true,
       maxlength: [255, 'Full name cannot exceed 255 characters'],
     },
+    avatarUrl: {
+      type: String,
+      trim: true,
+    },
     dateOfBirth: {
       type: Date,
       default: null,
