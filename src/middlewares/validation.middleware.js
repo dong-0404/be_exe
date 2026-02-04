@@ -23,15 +23,33 @@ function validateBody(schema) {
 
         // Validate field rules
         for (const [field, rules] of Object.entries(fields)) {
-            const value = req.body[field];
+            let value = req.body[field];
 
             // Skip if field is not provided and not required
-            if (!value && !required.includes(field)) {
-                continue;
+            if (value === undefined || value === null || value === '') {
+                if (!required.includes(field)) {
+                    continue;
+                }
             }
 
-            // Type validation
-            if (rules.type) {
+            // Type conversion and validation for numbers
+            // This is needed when using multipart/form-data (all values are strings)
+            if (rules.type === 'number') {
+                const numValue = Number(value);
+                if (isNaN(numValue)) {
+                    errors.push({
+                        field,
+                        message: `${field} must be a valid number`,
+                    });
+                    continue;
+                }
+                // Convert to number and update req.body
+                value = numValue;
+                req.body[field] = numValue;
+            }
+
+            // Type validation for non-number types
+            if (rules.type && rules.type !== 'number') {
                 const actualType = typeof value;
                 if (actualType !== rules.type) {
                     errors.push({

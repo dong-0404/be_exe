@@ -31,3 +31,5 @@ coverage/
 # Build outputs
 dist/
 build/
+
+uploads/

@@ -1,4 +1,5 @@
 const StudentService = require('../services/student.service');
+const CloudinaryService = require('../services/cloudinary.service');
 const { success, error: errorResponse } = require('../utils/response');
 
 /**
@@ -7,6 +8,7 @@ const { success, error: errorResponse } = require('../utils/response');
 class StudentController {
     constructor() {
         this.studentService = new StudentService();
+        this.cloudinaryService = new CloudinaryService();
     }
 
     /**
@@ -58,12 +60,16 @@ class StudentController {
     /**
      * Get my student profile (authenticated user)
      * GET /api/v1/students/me
+     * GET /api/v1/students/profile
      */
     async getMyProfile(req, res) {
         try {
-            const userId = req.user._id;
+            const userId = req.user.id;
             const student = await this.studentService.getStudentByUserId(userId);
-            return success(res, { data: student });
+            return success(res, {
+                data: student,
+                message: 'Student profile retrieved successfully'
+            });
         } catch (err) {
             return errorResponse(res, {
                 message: err.message,
@@ -90,14 +96,30 @@ class StudentController {
     }
 
     /**
-     * Update student profile
+     * Update student profile by ID
      * PUT /api/v1/students/:id
      */
     async updateProfile(req, res) {
         try {
             const { id } = req.params;
             const updateData = req.body;
-            const userId = req.user?._id;
+            const userId = req.user?.id;
+
+            // Handle avatar upload if file is provided
+            if (req.file) {
+                try {
+                    const uploadResult = await this.cloudinaryService.uploadImage(
+                        req.file.path,
+                        { folder: 'students/avatars' }
+                    );
+                    updateData.avatarUrl = uploadResult.url; // ← Changed from secure_url to url
+                } catch (uploadErr) {
+                    return errorResponse(res, {
+                        message: 'Failed to upload avatar: ' + uploadErr.message,
+                        statusCode: 500,
+                    });
+                }
+            }
 
             const student = await this.studentService.updateStudentProfile(
                 id,
@@ -107,6 +129,53 @@ class StudentController {
 
             return success(res, {
                 data: student,
+                message: 'Student profile updated successfully',
+            });
+        } catch (err) {
+            return errorResponse(res, {
+                message: err.message,
+                statusCode: err.statusCode || 500,
+            });
+        }
+    }
+
+    /**
+     * Update my student profile (authenticated user)
+     * PUT /api/v1/students/profile
+     */
+    async updateMyProfile(req, res) {
+        try {
+            const userId = req.user.id;
+            const updateData = req.body;
+
+            // Find student by userId first
+            const student = await this.studentService.getStudentByUserId(userId);
+
+            // Handle avatar upload if file is provided
+            if (req.file) {
+                try {
+                    const uploadResult = await this.cloudinaryService.uploadImage(
+                        req.file.path,
+                        { folder: 'students/avatars' }
+                    );
+                    updateData.avatarUrl = uploadResult.url;
+                } catch (uploadErr) {
+                    return errorResponse(res, {
+                        message: 'Failed to upload avatar: ' + uploadErr.message,
+                        statusCode: 500,
+                    });
+                }
+            }
+
+            // Update using student ID
+            const updatedStudent = await this.studentService.updateStudentProfile(
+                student._id,
+                updateData,
+                userId
+            );
+
+            return success(res, {
+                data: updatedStudent,
                 message: 'Student profile updated successfully',
             });
         } catch (err) {

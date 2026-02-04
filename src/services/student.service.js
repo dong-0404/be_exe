@@ -91,10 +91,14 @@ class StudentService {
         }
 
         // If userId provided, check ownership
-        if (userId && student.userId.toString() !== userId) {
-            const error = new Error('Not authorized to update this profile');
-            error.statusCode = 403;
-            throw error;
+        if (userId) {
+            // student.userId is populated object with _id field
+            const studentUserId = student.userId._id || student.userId;
+            if (studentUserId.toString() !== userId.toString()) {
+                const error = new Error('Not authorized to update this profile');
+                error.statusCode = 403;
+                throw error;
+            }
         }
 
         // Don't allow changing userId
@@ -116,10 +120,14 @@ class StudentService {
         }
 
         // If userId provided, check ownership
-        if (userId && student.userId.toString() !== userId) {
-            const error = new Error('Not authorized to delete this profile');
-            error.statusCode = 403;
-            throw error;
+        if (userId) {
+            // student.userId is populated object with _id field
+            const studentUserId = student.userId._id || student.userId;
+            if (studentUserId.toString() !== userId.toString()) {
+                const error = new Error('Not authorized to delete this profile');
+                error.statusCode = 403;
+                throw error;
+            }
         }
 
         await this.studentRepo.deleteById(id);

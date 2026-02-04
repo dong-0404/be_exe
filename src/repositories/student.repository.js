@@ -10,7 +10,8 @@ class StudentRepository {
   async findById(id) {
     return StudentModel.findById(id)
       .populate('userId', 'email phone status')
-      .populate('parentId', 'fullName');
+      .populate('parentId', 'fullName avatarUrl')
+      .lean();
   }
 
   /**
@@ -19,7 +20,8 @@ class StudentRepository {
   async findByUserId(userId) {
     return StudentModel.findOne({ userId })
       .populate('userId', 'email phone status')
-      .populate('parentId', 'fullName');
+      .populate('parentId', 'fullName avatarUrl')
+      .lean();
   }
 
   /**
@@ -27,7 +29,8 @@ class StudentRepository {
    */
   async findByParentId(parentId) {
     return StudentModel.find({ parentId })
-      .populate('userId', 'email phone status');
+      .populate('userId', 'email phone status')
+      .lean();
   }
 
   /**
@@ -46,7 +49,8 @@ class StudentRepository {
       runValidators: true,
     })
       .populate('userId', 'email phone status')
-      .populate('parentId', 'fullName');
+      .populate('parentId', 'fullName avatarUrl')
+      .lean();
   }
 
   /**
@@ -65,10 +69,11 @@ class StudentRepository {
     const [students, total] = await Promise.all([
       StudentModel.find(filter)
         .populate('userId', 'email phone status')
-        .populate('parentId', 'fullName')
+        .populate('parentId', 'fullName avatarUrl')
         .skip(skip)
         .limit(limit)
-        .sort({ createdAt: -1 }),
+        .sort({ createdAt: -1 })
+        .lean(),
       StudentModel.countDocuments(filter),
     ]);
 
