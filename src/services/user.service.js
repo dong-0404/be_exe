@@ -1,8 +1,11 @@
 const UserRepository = require('../repositories/user.repository');
+const StudentRepository = require('../repositories/student.repository');
+const TutorRepository = require('../repositories/tutor.repository');
+const ParentRepository = require('../repositories/parent.repository');
 const OtpService = require('./otp.service');
 const EmailService = require('./email.service');
 const { hashPassword } = require('../utils/hash');
-const { UserStatus } = require('../constants/enums');
+const { UserStatus, UserRole } = require('../constants/enums');
 
 /**
  * User Service - Business Logic Layer
@@ -11,6 +14,9 @@ const { UserStatus } = require('../constants/enums');
 class UserService {
   constructor() {
     this.userRepo = new UserRepository();
+    this.studentRepo = new StudentRepository();
+    this.tutorRepo = new TutorRepository();
+    this.parentRepo = new ParentRepository();
     this.otpService = new OtpService();
     this.emailService = new EmailService();
   }
@@ -267,6 +273,66 @@ class UserService {
     delete updateData.isActive;
 
     return this.updateUser(userId, updateData);
+  }
+
+  /**
+   * Enrich user data with fullName and avatarUrl from profile
+   * @param {Object} user - User object with _id, email, phone, role
+   * @returns {Promise<Object>} Enriched user data
+   */
+  async enrichUserData(user) {
+    if (!user) return null;
+
+    // Base user data
+    const enrichedUser = {
+      _id: user._id,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      fullName: null,
+      avatarUrl: null,
+    };
+
+    try {
+      let profile = null;
+
+      // Get profile based on role
+      switch (user.role) {
+        case UserRole.STUDENT:
+          profile = await this.studentRepo.findByUserId(user._id);
+          break;
+        case UserRole.TUTOR:
+          profile = await this.tutorRepo.findByUserId(user._id);
+          break;
+        case UserRole.PARENT:
+          profile = await this.parentRepo.findByUserId(user._id);
+          break;
+        default:
+          break;
+      }
+
+      // Add fullName and avatarUrl if profile exists
+      if (profile) {
+        enrichedUser.fullName = profile.fullName || null;
+        enrichedUser.avatarUrl = profile.avatarUrl || null;
+      }
+    } catch (error) {
+      // If error fetching profile, just return base user data
+      console.error('Error enriching user data:', error);
+    }
+
+    return enrichedUser;
+  }
+
+  /**
+   * Enrich multiple users data
+   * @param {Array} users - Array of user objects
+   * @returns {Promise<Array>} Array of enriched user data
+   */
+  async enrichUsersData(users) {
+    if (!users || users.length === 0) return [];
+
+    return Promise.all(users.map((user) => this.enrichUserData(user)));
   }
 }
 
