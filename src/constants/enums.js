@@ -105,6 +105,39 @@ const FeedbackAuthorRoleLabel = {
     [FeedbackAuthorRole.PARENT]: 'PARENT',
 };
 
+// Post Type
+const PostType = {
+    FIND_TUTOR: 1,
+    SHARE: 2,
+};
+
+const PostTypeLabel = {
+    [PostType.FIND_TUTOR]: 'FIND_TUTOR',
+    [PostType.SHARE]: 'SHARE',
+};
+
+// Post Status
+const PostStatus = {
+    ACTIVE: 1,
+    DELETED: 0,
+};
+
+const PostStatusLabel = {
+    [PostStatus.ACTIVE]: 'ACTIVE',
+    [PostStatus.DELETED]: 'DELETED',
+};
+
+// Comment Status
+const CommentStatus = {
+    ACTIVE: 1,
+    DELETED: 0,
+};
+
+const CommentStatusLabel = {
+    [CommentStatus.ACTIVE]: 'ACTIVE',
+    [CommentStatus.DELETED]: 'DELETED',
+};
+
 module.exports = {
     UserRole,
     UserRoleLabel,
@@ -122,4 +155,10 @@ module.exports = {
     FeedbackStatusLabel,
     FeedbackAuthorRole,
     FeedbackAuthorRoleLabel,
+    PostType,
+    PostTypeLabel,
+    PostStatus,
+    PostStatusLabel,
+    CommentStatus,
+    CommentStatusLabel,
 };

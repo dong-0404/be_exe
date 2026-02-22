@@ -5,6 +5,7 @@ const tutorRoutes = require('./tutor.route');
 const uploadRoutes = require('./upload.route');
 const subjectRoutes = require('./subject.route');
 const gradeRoutes = require('./grade.route');
+const communityRoutes = require('./community.route');
 
 /**
  * Register all application routes
@@ -35,10 +36,10 @@ function registerRoutes(app) {
   // Grade routes
   app.use(`${API_PREFIX}/grades`, gradeRoutes);
 
+  // Community routes
+  app.use(`${API_PREFIX}/community`, communityRoutes);
+
   // Add more routes here as the application grows
-  // Example:
-  // app.use(`${API_PREFIX}/posts`, postRoutes);
-  // app.use(`${API_PREFIX}/comments`, commentRoutes);
 }
 
 module.exports = { registerRoutes };
