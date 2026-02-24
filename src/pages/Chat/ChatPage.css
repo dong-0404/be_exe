@@ -1,0 +1,23 @@
+/* ChatPage Styles */
+
+.chat-page {
+  width: 100%;
+  height: calc(100vh - 60px); /* Subtract header height */
+  background-color: #F5F5F5;
+  overflow: hidden;
+}
+
+.chat-container {
+  max-width: 1400px;
+  height: 100%;
+  margin: 0 auto;
+  display: flex;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .chat-container {
+    flex-direction: column;
+  }
+}

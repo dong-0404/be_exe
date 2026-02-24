@@ -3,6 +3,7 @@ import { Dropdown } from 'react-bootstrap'
 import { routes } from '../config/routes'
 import { Footer } from './Footer'
 import { getCurrentUser, isAuthenticated, clearAuthData } from '../features/auth/utils/authHelpers'
+import { NotificationBell } from '../features/chat/components/NotificationBell'
 
 export const MainLayout = () => {
   const navigate = useNavigate()
@@ -45,40 +46,43 @@ export const MainLayout = () => {
                 </svg>
               </Link>
             ) : (
-              <Dropdown align="end">
-                <Dropdown.Toggle
-                  variant="light"
-                  id="user-dropdown"
-                  className="d-flex align-items-center gap-2 border-0"
-                  style={{ backgroundColor: 'white', color: '#0066cc' }}
-                >
-                  <div
-                    className="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white"
-                    style={{ width: '36px', height: '36px', fontSize: '14px', fontWeight: 'bold' }}
+              <div className="d-flex align-items-center gap-3">
+                <NotificationBell />
+                <Dropdown align="end">
+                  <Dropdown.Toggle
+                    variant="light"
+                    id="user-dropdown"
+                    className="d-flex align-items-center gap-2 border-0"
+                    style={{ backgroundColor: 'white', color: '#0066cc' }}
                   >
-                    {currentUser?.email?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <span className="fw-medium">
-                    {currentUser?.email?.split('@')[0] || 'User'}
-                  </span>
-                </Dropdown.Toggle>
+                    <div
+                      className="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white"
+                      style={{ width: '36px', height: '36px', fontSize: '14px', fontWeight: 'bold' }}
+                    >
+                      {currentUser?.email?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <span className="fw-medium">
+                      {currentUser?.email?.split('@')[0] || 'User'}
+                    </span>
+                  </Dropdown.Toggle>
 
-                <Dropdown.Menu>
-                  <Dropdown.Item onClick={() => navigate(routes.profile)}>
-                    👤 Hồ sơ của tôi
-                  </Dropdown.Item>
-                  <Dropdown.Item onClick={() => navigate(routes.chat)}>
-                    💬 Chat
-                  </Dropdown.Item>
-                  <Dropdown.Item onClick={() => navigate('/settings')}>
-                    ⚙️ Cài đặt
-                  </Dropdown.Item>
-                  <Dropdown.Divider />
-                  <Dropdown.Item onClick={handleLogout} className="text-danger">
-                    🚪 Đăng xuất
-                  </Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
+                  <Dropdown.Menu>
+                    <Dropdown.Item onClick={() => navigate(routes.profile)}>
+                      👤 Hồ sơ của tôi
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => navigate(routes.chat)}>
+                      💬 Chat
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => navigate('/settings')}>
+                      ⚙️ Cài đặt
+                    </Dropdown.Item>
+                    <Dropdown.Divider />
+                    <Dropdown.Item onClick={handleLogout} className="text-danger">
+                      🚪 Đăng xuất
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
+              </div>
             )}
           </div>
         </div>

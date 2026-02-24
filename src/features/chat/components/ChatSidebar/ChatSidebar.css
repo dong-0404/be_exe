@@ -1,0 +1,150 @@
+/* ChatSidebar Styles */
+
+.chat-sidebar {
+  width: 300px;
+  height: 100%;
+  background-color: white;
+  border-right: 1px solid #E0E0E0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Search Bar */
+.sidebar-search {
+  position: relative;
+  padding: 16px;
+  border-bottom: 1px solid #E0E0E0;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 40px 10px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: #0066cc;
+}
+
+.search-icon {
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  pointer-events: none;
+}
+
+/* Tabs */
+.sidebar-tabs {
+  display: flex;
+  border-bottom: 1px solid #E0E0E0;
+  background-color: white;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.tab-button:hover {
+  color: #0066cc;
+  background-color: #F5F5F5;
+}
+
+.tab-button.active {
+  color: #0066cc;
+  font-weight: 600;
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #0066cc;
+}
+
+/* Conversation List */
+.conversation-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.conversation-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.conversation-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.conversation-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.conversation-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  color: #666;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #E0E0E0;
+  border-top-color: #0066cc;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  color: #999;
+  text-align: center;
+}
+
+.empty-state svg {
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 14px;
+}

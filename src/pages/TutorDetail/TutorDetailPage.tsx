@@ -14,12 +14,14 @@ import {
 } from '../../features/findTutor/findTutorSelector'
 import { getGenderDisplay, getTimeSlotDisplay, getDayDisplay } from '../../features/findTutor/types'
 import type { Feedback } from '../../features/findTutor/types'
+import { useStartChat } from '../../features/chat/hooks'
 import './TutorDetailPage.css'
 
 export const TutorDetailPage = () => {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const dispatch = useAppDispatch()
+    const { startChat } = useStartChat()
 
     // Selectors
     const tutorDetail = useAppSelector(selectTutorDetail)
@@ -31,6 +33,15 @@ export const TutorDetailPage = () => {
     const feedbackTotal = useAppSelector(selectFeedbackTotal)
 
     const [selectedRating, setSelectedRating] = useState<number | null>(null)
+
+    // Handle chat button click
+    const handleChatClick = () => {
+        if (!tutorDetail?.userId?._id) {
+            alert('Không tìm thấy thông tin người dùng')
+            return
+        }
+        startChat(tutorDetail.userId._id)
+    }
 
     // Fetch tutor detail và feedbacks khi component mount
     useEffect(() => {
@@ -124,7 +135,7 @@ export const TutorDetailPage = () => {
                             <Button
                                 variant="outline-primary"
                                 className="chat-button"
-                                onClick={() => alert('Tính năng chat đang phát triển')}
+                                onClick={handleChatClick}
                             >
                                 💬 Chat ngay
                             </Button>

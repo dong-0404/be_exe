@@ -8,6 +8,7 @@ import { PrivacyPolicyPage } from '../pages/PrivacyPolicy'
 import { FindTutorPage } from '../pages/FindTutor/FindTutorPage'
 import { TutorDetailPage } from '../pages/TutorDetail'
 import { CommunityPage } from '../pages/Community'
+import { ChatPage } from '../pages/Chat'
 import { LoginPage, RegisterPage, OTPVerificationPage } from '../pages/Auth'
 import {
     StudentProfilePage,
@@ -36,6 +37,14 @@ export const AppRoutes = () => {
                     element={
                         <ProtectedRoute>
                             <CommunityPage />
+                        </ProtectedRoute>
+                    } 
+                />
+                <Route 
+                    path={routes.chat} 
+                    element={
+                        <ProtectedRoute>
+                            <ChatPage />
                         </ProtectedRoute>
                     } 
                 />

@@ -305,7 +305,14 @@ function updateCommentInPost(post: Post, commentId: string, updatedComment: Comm
 function updateCommentRecursive(comments: Comment[], commentId: string, updatedComment: Comment): boolean {
   for (let i = 0; i < comments.length; i++) {
     if (comments[i]._id === commentId) {
-      comments[i] = updatedComment
+      // Merge instead of replace to preserve replies if backend doesn't return them
+      const existingReplies = comments[i].replies
+      comments[i] = {
+        ...comments[i],
+        ...updatedComment,
+        // Preserve replies if updatedComment doesn't have them
+        replies: updatedComment.replies !== undefined ? updatedComment.replies : existingReplies
+      }
       return true
     }
 

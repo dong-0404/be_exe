@@ -8,6 +8,9 @@ export const env = {
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1/',
     apiTimeout: Number(import.meta.env.VITE_API_TIMEOUT) || 30000,
 
+    // WebSocket Configuration (Socket.io uses HTTP URL)
+    wsBaseUrl: import.meta.env.VITE_WS_BASE_URL || 'http://localhost:3000',
+
     // Environment
     env: import.meta.env.VITE_ENV || import.meta.env.MODE || 'development',
     isDevelopment: import.meta.env.DEV,

@@ -1,0 +1,42 @@
+/* NotificationBell Styles */
+
+.notification-bell {
+  position: relative;
+}
+
+.bell-button {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.bell-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.notification-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background-color: #f44336;
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #0066cc;
+}
