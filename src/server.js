@@ -1,6 +1,11 @@
 const createApp = require('./app');
 const database = require('./config/database');
 const config = require('./config/env');
+const { Server } = require('socket.io');
+const socketAuth = require('./middlewares/socketAuth.middleware');
+const WebSocketService = require('./services/websocket.service');
+const MessageController = require('./controllers/message.controller');
+const { setMessageController } = require('./routes/index');
 
 /**
  * Start the server
@@ -18,11 +23,34 @@ async function startServer() {
       console.log(`Server is running on port ${config.port}`);
     });
 
+    // Initialize Socket.io
+    const io = new Server(server, {
+      cors: {
+        origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+        credentials: true,
+        methods: ['GET', 'POST'],
+      },
+    });
+
+    // Socket.io authentication middleware
+    io.use(socketAuth);
+
+    // Initialize WebSocket service
+    const websocketService = new WebSocketService();
+    websocketService.initialize(io);
+
+    // Update MessageController with websocket service
+    const messageController = new MessageController(websocketService);
+    setMessageController(messageController);
+
+    console.log('Socket.io server initialized');
+
     // Graceful shutdown
     process.on('SIGTERM', () => {
       console.log('SIGTERM signal received: closing HTTP server');
       server.close(async () => {
         console.log('HTTP server closed');
+        io.close();
         await database.disconnect();
         process.exit(0);
       });
@@ -32,6 +60,7 @@ async function startServer() {
       console.log('\nSIGINT signal received: closing HTTP server');
       server.close(async () => {
         console.log('HTTP server closed');
+        io.close();
         await database.disconnect();
         process.exit(0);
       });
