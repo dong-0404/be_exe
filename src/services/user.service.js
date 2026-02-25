@@ -3,7 +3,7 @@ const StudentRepository = require('../repositories/student.repository');
 const TutorRepository = require('../repositories/tutor.repository');
 const ParentRepository = require('../repositories/parent.repository');
 const OtpService = require('./otp.service');
-const EmailService = require('./email.service');
+const getEmailService = require('./email.service');
 const { hashPassword } = require('../utils/hash');
 const { UserStatus, UserRole } = require('../constants/enums');
 
@@ -18,7 +18,7 @@ class UserService {
     this.tutorRepo = new TutorRepository();
     this.parentRepo = new ParentRepository();
     this.otpService = new OtpService();
-    this.emailService = new EmailService();
+    this.emailService = getEmailService(); // Get singleton instance
   }
 
   /**
