@@ -138,6 +138,30 @@ const CommentStatusLabel = {
     [CommentStatus.DELETED]: 'DELETED',
 };
 
+// Message Type
+const MessageType = {
+    TEXT: 1,
+    IMAGE: 2,
+    FILE: 3,
+};
+
+const MessageTypeLabel = {
+    [MessageType.TEXT]: 'TEXT',
+    [MessageType.IMAGE]: 'IMAGE',
+    [MessageType.FILE]: 'FILE',
+};
+
+// Notification Type
+const NotificationType = {
+    NEW_MESSAGE: 1,
+    MESSAGE_READ: 2,
+};
+
+const NotificationTypeLabel = {
+    [NotificationType.NEW_MESSAGE]: 'NEW_MESSAGE',
+    [NotificationType.MESSAGE_READ]: 'MESSAGE_READ',
+};
+
 module.exports = {
     UserRole,
     UserRoleLabel,
@@ -161,4 +185,8 @@ module.exports = {
     PostStatusLabel,
     CommentStatus,
     CommentStatusLabel,
+    MessageType,
+    MessageTypeLabel,
+    NotificationType,
+    NotificationTypeLabel,
 };
