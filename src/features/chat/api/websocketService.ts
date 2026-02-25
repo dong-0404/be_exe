@@ -34,9 +34,9 @@ class WebSocketService {
 
         try {
             // Get Socket.io URL from env (use HTTP, Socket.io will upgrade to WebSocket)
-            const serverUrl = env.isDevelopment
-                ? 'http://localhost:3000'
-                : import.meta.env.VITE_WS_BASE_URL || 'http://localhost:3000'
+            const serverUrl = import.meta.env.VITE_ENV
+                ? import.meta.env.VITE_WS_BASE_URL
+                : "http://localhost:3000"
 
             // Create Socket.io connection with auth token
             this.socket = io(serverUrl, {
