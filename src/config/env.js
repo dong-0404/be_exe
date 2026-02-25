@@ -21,7 +21,10 @@ const config = {
 
     // Email
     email: {
-        service: process.env.EMAIL_SERVICE, // 'gmail', 'sendgrid', etc.
+        // SendGrid API Key (recommended for Render/production)
+        sendgridApiKey: process.env.SENDGRID_API_KEY,
+        // SMTP Configuration (alternative)
+        service: process.env.EMAIL_SERVICE, // 'gmail', 'outlook', etc.
         user: process.env.EMAIL_USER,
         password: process.env.EMAIL_PASSWORD,
         fromEmail: process.env.EMAIL_FROM || 'noreply@tutorplatform.com',

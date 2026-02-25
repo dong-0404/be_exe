@@ -5,143 +5,248 @@ const config = require('../config/env');
  * Email Service - Handles sending emails
  */
 class EmailService {
-    constructor() {
-        this.transporter = null;
-        this.initTransporter();
+  constructor() {
+    this.transporter = null;
+    this.initTransporter();
+  }
+
+  /**
+   * Initialize email transporter
+   */
+  initTransporter() {
+    // Check if using SendGrid API (recommended for Render)
+    if (config.email.sendgridApiKey) {
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.sendgrid.net',
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: 'apikey',
+          pass: config.email.sendgridApiKey,
+        },
+        // Connection timeout settings for Render
+        connectionTimeout: 60000, // 60 seconds
+        greetingTimeout: 30000, // 30 seconds
+        socketTimeout: 60000, // 60 seconds
+        // Retry settings
+        pool: true,
+        maxConnections: 1,
+        maxMessages: 3,
+      });
+      this.isReady = true;
+      console.log('✅ Email service initialized with SendGrid');
+      return;
     }
 
-    /**
-     * Initialize email transporter
-     */
-    initTransporter() {
-        if (config.email.service && config.email.user && config.email.password) {
-            // Use real email service (Gmail, SendGrid, etc.)
-            this.transporter = nodemailer.createTransport({
-                service: config.email.service,
-                auth: {
-                    user: config.email.user,
-                    pass: config.email.password,
-                },
-            });
-            this.isReady = true;
-        } else {
-            this.createEtherealTransporter();
-        }
+    // Check if using SMTP with service name (Gmail, etc.)
+    if (config.email.service && config.email.user && config.email.password) {
+      // Determine port and secure based on service
+      const smtpConfig = this.getSmtpConfig(config.email.service);
+
+      this.transporter = nodemailer.createTransport({
+        service: config.email.service,
+        host: smtpConfig.host,
+        port: smtpConfig.port,
+        secure: smtpConfig.secure,
+        auth: {
+          user: config.email.user,
+          pass: config.email.password,
+        },
+        // Connection timeout settings for Render
+        connectionTimeout: 60000, // 60 seconds
+        greetingTimeout: 30000, // 30 seconds
+        socketTimeout: 60000, // 60 seconds
+        // Retry settings
+        pool: true,
+        maxConnections: 1,
+        maxMessages: 3,
+        // TLS options
+        tls: {
+          rejectUnauthorized: true, // Verify certificates
+          minVersion: 'TLSv1.2', // Use TLS 1.2 or higher
+        },
+      });
+      this.isReady = true;
+      console.log(`✅ Email service initialized with ${config.email.service}`);
+      return;
     }
 
-    /**
-     * Create ethereal test account for development
-     */
-    async createEtherealTransporter() {
-        try {
-            const testAccount = await nodemailer.createTestAccount();
-            this.transporter = nodemailer.createTransport({
-                host: 'smtp.ethereal.email',
-                port: 587,
-                secure: false,
-                auth: {
-                    user: testAccount.user,
-                    pass: testAccount.pass,
-                },
-            });
-            this.isReady = true;
-        } catch (error) {
-            this.isReady = false;
-        }
+    // Fallback to Ethereal for development
+    this.createEtherealTransporter();
+  }
+
+  /**
+   * Get SMTP configuration for different services
+   */
+  getSmtpConfig(service) {
+    const configs = {
+      gmail: {
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+      },
+      outlook: {
+        host: 'smtp-mail.outlook.com',
+        port: 587,
+        secure: false,
+      },
+      yahoo: {
+        host: 'smtp.mail.yahoo.com',
+        port: 587,
+        secure: false,
+      },
+      // Add more services as needed
+    };
+
+    return configs[service.toLowerCase()] || {
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+    };
+  }
+
+  /**
+   * Create ethereal test account for development
+   */
+  async createEtherealTransporter() {
+    try {
+      const testAccount = await nodemailer.createTestAccount();
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+      this.isReady = true;
+    } catch (error) {
+      this.isReady = false;
+    }
+  }
+
+  /**
+   * Wait for transporter to be ready
+   */
+  async waitForReady() {
+    // If using real SMTP (SendGrid or other), it's ready immediately
+    if (config.email.sendgridApiKey ||
+      (config.email.service && config.email.user && config.email.password)) {
+      return;
     }
 
-    /**
-     * Wait for transporter to be ready
-     */
-    async waitForReady() {
-        // If using real SMTP, it's ready immediately
-        if (config.email.service && config.email.user && config.email.password) {
-            return;
-        }
-
-        // Wait for Ethereal to be ready
-        let attempts = 0;
-        while (!this.isReady && attempts < 10) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            attempts++;
-        }
-
-        if (!this.isReady) {
-            throw new Error('Email service failed to initialize');
-        }
+    // Wait for Ethereal to be ready
+    let attempts = 0;
+    while (!this.isReady && attempts < 10) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      attempts++;
     }
 
-    /**
-     * Send OTP email
-     */
-    async sendOtpEmail(to, otp, userName = 'User') {
-        try {
-            // Wait for transporter to be ready
-            await this.waitForReady();
+    if (!this.isReady) {
+      throw new Error('Email service failed to initialize');
+    }
+  }
 
-            const mailOptions = {
-                from: `"${config.email.fromName}" <${config.email.fromEmail}>`,
-                to,
-                subject: 'Xác thực tài khoản - Mã OTP',
-                html: this.getOtpEmailTemplate(otp, userName),
-            };
+  /**
+   * Send email with retry logic
+   */
+  async sendEmailWithRetry(mailOptions, maxRetries = 3) {
+    let lastError;
 
-            const info = await this.transporter.sendMail(mailOptions);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // Wait for transporter to be ready
+        await this.waitForReady();
 
-            if (config.nodeEnv !== 'production') {
-                console.log('📧 Email sent: %s', info.messageId);
-                console.log('📧 Preview URL: %s', nodemailer.getTestMessageUrl(info));
-            }
+        const info = await this.transporter.sendMail(mailOptions);
+        return info;
+      } catch (error) {
+        lastError = error;
+        console.error(`❌ Email send attempt ${attempt}/${maxRetries} failed:`, error.message);
 
-            return {
-                success: true,
-                messageId: info.messageId,
-                previewUrl: nodemailer.getTestMessageUrl(info),
-            };
-        } catch (error) {
-            console.error('❌ Error sending OTP email:', error);
-            throw new Error('Failed to send OTP email');
+        // Don't retry on certain errors
+        if (error.code === 'EAUTH' || error.code === 'EENVELOPE') {
+          throw error;
         }
+
+        // Wait before retry (exponential backoff)
+        if (attempt < maxRetries) {
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+          console.log(`⏳ Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
     }
 
-    /**
-     * Send welcome email
-     */
-    async sendWelcomeEmail(to, userName) {
-        try {
-            // Wait for transporter to be ready
-            await this.waitForReady();
+    throw lastError;
+  }
 
-            const mailOptions = {
-                from: `"${config.email.fromName}" <${config.email.fromEmail}>`,
-                to,
-                subject: 'Chào mừng bạn đến với Tutor Platform!',
-                html: this.getWelcomeEmailTemplate(userName),
-            };
+  /**
+   * Send OTP email
+   */
+  async sendOtpEmail(to, otp, userName = 'User') {
+    try {
+      const mailOptions = {
+        from: `"${config.email.fromName}" <${config.email.fromEmail}>`,
+        to,
+        subject: 'Xác thực tài khoản - Mã OTP',
+        html: this.getOtpEmailTemplate(otp, userName),
+      };
 
-            const info = await this.transporter.sendMail(mailOptions);
+      const info = await this.sendEmailWithRetry(mailOptions);
 
-            if (config.nodeEnv !== 'production') {
-                console.log('📧 Welcome email sent: %s', info.messageId);
-                console.log('📧 Preview URL: %s', nodemailer.getTestMessageUrl(info));
-            }
+      if (config.nodeEnv !== 'production') {
+        console.log('📧 Email sent: %s', info.messageId);
+        console.log('📧 Preview URL: %s', nodemailer.getTestMessageUrl(info));
+      }
 
-            return {
-                success: true,
-                messageId: info.messageId,
-            };
-        } catch (error) {
-            console.error('❌ Error sending welcome email:', error);
-            // Don't throw error for welcome email
-            return { success: false };
-        }
+      return {
+        success: true,
+        messageId: info.messageId,
+        previewUrl: nodemailer.getTestMessageUrl(info),
+      };
+    } catch (error) {
+      console.error('❌ Error sending OTP email:', error);
+      throw new Error(`Failed to send OTP email: ${error.message}`);
     }
+  }
 
-    /**
-     * OTP email template
-     */
-    getOtpEmailTemplate(otp, userName) {
-        return `
+  /**
+   * Send welcome email
+   */
+  async sendWelcomeEmail(to, userName) {
+    try {
+      const mailOptions = {
+        from: `"${config.email.fromName}" <${config.email.fromEmail}>`,
+        to,
+        subject: 'Chào mừng bạn đến với Tutor Platform!',
+        html: this.getWelcomeEmailTemplate(userName),
+      };
+
+      const info = await this.sendEmailWithRetry(mailOptions);
+
+      if (config.nodeEnv !== 'production') {
+        console.log('📧 Welcome email sent: %s', info.messageId);
+        console.log('📧 Preview URL: %s', nodemailer.getTestMessageUrl(info));
+      }
+
+      return {
+        success: true,
+        messageId: info.messageId,
+      };
+    } catch (error) {
+      console.error('❌ Error sending welcome email:', error);
+      // Don't throw error for welcome email
+      return { success: false };
+    }
+  }
+
+  /**
+   * OTP email template
+   */
+  getOtpEmailTemplate(otp, userName) {
+    return `
       <!DOCTYPE html>
       <html>
       <head>
@@ -187,13 +292,13 @@ class EmailService {
       </body>
       </html>
     `;
-    }
+  }
 
-    /**
-     * Welcome email template
-     */
-    getWelcomeEmailTemplate(userName) {
-        return `
+  /**
+   * Welcome email template
+   */
+  getWelcomeEmailTemplate(userName) {
+    return `
       <!DOCTYPE html>
       <html>
       <head>
@@ -241,46 +346,43 @@ class EmailService {
       </body>
       </html>
     `;
+  }
+
+  /**
+   * Send password reset email
+   */
+  async sendPasswordResetEmail(to, otp, userName) {
+    try {
+      const mailOptions = {
+        from: `"${config.email.fromName}" <${config.email.fromEmail}>`,
+        to,
+        subject: 'Đặt lại mật khẩu - Mã OTP',
+        html: this.getPasswordResetEmailTemplate(otp, userName),
+      };
+
+      const info = await this.sendEmailWithRetry(mailOptions);
+
+      if (config.nodeEnv !== 'production') {
+        console.log('📧 Password reset email sent: %s', info.messageId);
+        console.log('📧 Preview URL: %s', nodemailer.getTestMessageUrl(info));
+      }
+
+      return {
+        success: true,
+        messageId: info.messageId,
+        previewUrl: nodemailer.getTestMessageUrl(info),
+      };
+    } catch (error) {
+      console.error('❌ Error sending password reset email:', error);
+      throw new Error(`Failed to send password reset email: ${error.message}`);
     }
+  }
 
-    /**
-     * Send password reset email
-     */
-    async sendPasswordResetEmail(to, otp, userName) {
-        try {
-            // Wait for transporter to be ready
-            await this.waitForReady();
-
-            const mailOptions = {
-                from: `"${config.email.fromName}" <${config.email.fromEmail}>`,
-                to,
-                subject: 'Đặt lại mật khẩu - Mã OTP',
-                html: this.getPasswordResetEmailTemplate(otp, userName),
-            };
-
-            const info = await this.transporter.sendMail(mailOptions);
-
-            if (config.nodeEnv !== 'production') {
-                console.log('📧 Password reset email sent: %s', info.messageId);
-                console.log('📧 Preview URL: %s', nodemailer.getTestMessageUrl(info));
-            }
-
-            return {
-                success: true,
-                messageId: info.messageId,
-                previewUrl: nodemailer.getTestMessageUrl(info),
-            };
-        } catch (error) {
-            console.error('❌ Error sending password reset email:', error);
-            throw new Error('Failed to send password reset email');
-        }
-    }
-
-    /**
-     * Password reset email template
-     */
-    getPasswordResetEmailTemplate(otp, userName) {
-        return `
+  /**
+   * Password reset email template
+   */
+  getPasswordResetEmailTemplate(otp, userName) {
+    return `
       <!DOCTYPE html>
       <html>
       <head>
@@ -326,7 +428,7 @@ class EmailService {
       </body>
       </html>
     `;
-    }
+  }
 }
 
 module.exports = EmailService;
