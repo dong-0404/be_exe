@@ -17,49 +17,74 @@ if (config.email.sendgridApiKey) {
  */
 class EmailService {
   constructor() {
+    // Prevent multiple initializations
+    if (EmailService.instance) {
+      return EmailService.instance;
+    }
+
     this.transporter = null;
     this.useSendGridApi = false; // Flag to use SendGrid Web API instead of SMTP
     this.initTransporter();
+
+    // Store instance for singleton pattern
+    EmailService.instance = this;
   }
 
   /**
    * Initialize email transporter
    */
   initTransporter() {
+    // Skip if already initialized (singleton pattern)
+    if (this.isReady) {
+      return;
+    }
+
+    // Check if SendGrid API Key is configured
+    if (!config.email.sendgridApiKey) {
+      console.error('❌ SENDGRID_API_KEY is not set in environment variables.');
+      this.isReady = false;
+      return;
+    }
+
+    // Check if EMAIL_FROM is configured
+    if (!config.email.fromEmail) {
+      console.error('❌ EMAIL_FROM is not set in environment variables.');
+      this.isReady = false;
+      return;
+    }
+
     // SendGrid Web API (not SMTP - works on Render)
-    if (config.email.sendgridApiKey && sgMail) {
+    if (sgMail) {
       this.useSendGridApi = true;
       this.isReady = true;
       console.log('✅ Email service initialized with SendGrid Web API (not blocked by Render)');
+      console.log(`   📧 From: ${config.email.fromEmail}`);
+      console.log(`   📝 Name: ${config.email.fromName || 'Tutor Platform'}`);
       return;
     }
 
     // Fallback: SendGrid SMTP (may be blocked by Render)
-    if (config.email.sendgridApiKey) {
-      this.transporter = nodemailer.createTransport({
-        host: 'smtp.sendgrid.net',
-        port: 587,
-        secure: false,
-        auth: {
-          user: 'apikey',
-          pass: config.email.sendgridApiKey,
-        },
-        connectionTimeout: 120000,
-        greetingTimeout: 60000,
-        socketTimeout: 120000,
-        pool: true,
-        maxConnections: 1,
-        maxMessages: 3,
-      });
-      this.isReady = true;
-      console.log('✅ Email service initialized with SendGrid SMTP');
-      console.log('⚠️  Warning: SendGrid SMTP may be blocked by Render. Install @sendgrid/mail to use Web API instead.');
-      return;
-    }
+    console.warn('⚠️  @sendgrid/mail package not found. Using SMTP (may be blocked by Render).');
+    console.warn('   To use Web API, run: npm install @sendgrid/mail');
 
-    // No email service configured
-    console.error('❌ No email service configured. Please set SENDGRID_API_KEY environment variable.');
-    this.isReady = false;
+    this.transporter = nodemailer.createTransport({
+      host: 'smtp.sendgrid.net',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'apikey',
+        pass: config.email.sendgridApiKey,
+      },
+      connectionTimeout: 120000,
+      greetingTimeout: 60000,
+      socketTimeout: 120000,
+      pool: true,
+      maxConnections: 1,
+      maxMessages: 3,
+    });
+    this.isReady = true;
+    console.log('✅ Email service initialized with SendGrid SMTP');
+    console.log('⚠️  Warning: SendGrid SMTP may be blocked by Render. Install @sendgrid/mail to use Web API instead.');
   }
 
   /**
@@ -82,7 +107,15 @@ class EmailService {
    */
   async sendViaSendGridApi(mailOptions) {
     if (!sgMail) {
-      throw new Error('SendGrid Web API not available. Please install @sendgrid/mail package.');
+      throw new Error('SendGrid Web API not available. Please install @sendgrid/mail package: npm install @sendgrid/mail');
+    }
+
+    if (!config.email.sendgridApiKey) {
+      throw new Error('SENDGRID_API_KEY is not set in environment variables');
+    }
+
+    if (!config.email.fromEmail) {
+      throw new Error('EMAIL_FROM is not set in environment variables');
     }
 
     const msg = {
@@ -95,11 +128,60 @@ class EmailService {
       html: mailOptions.html,
     };
 
-    const response = await sgMail.send(msg);
-    return {
-      messageId: response[0].headers['x-message-id'] || 'sendgrid-' + Date.now(),
-      response: response[0],
-    };
+    try {
+      const response = await sgMail.send(msg);
+      return {
+        messageId: response[0].headers['x-message-id'] || 'sendgrid-' + Date.now(),
+        response: response[0],
+      };
+    } catch (error) {
+      // Enhanced error logging for SendGrid - always log in production
+      console.error('❌ SendGrid API Error Details:', {
+        message: error.message,
+        code: error.code,
+        statusCode: error.response?.statusCode,
+        responseBody: error.response?.body,
+      });
+
+      // Log full response in production for debugging
+      if (error.response) {
+        console.error('SendGrid Full Response:', JSON.stringify({
+          statusCode: error.response.statusCode,
+          body: error.response.body,
+          headers: error.response.headers,
+        }, null, 2));
+      }
+
+      // Provide user-friendly error messages
+      if (error.response) {
+        const { statusCode, body } = error.response;
+        if (statusCode === 401) {
+          const friendlyError = new Error('SendGrid API Key is invalid. Please check your SENDGRID_API_KEY environment variable.');
+          friendlyError.statusCode = 401;
+          friendlyError.originalError = error;
+          throw friendlyError;
+        }
+        if (statusCode === 403) {
+          const friendlyError = new Error('SendGrid: Sender email is not verified. Please verify your email in SendGrid dashboard.');
+          friendlyError.statusCode = 403;
+          friendlyError.originalError = error;
+          throw friendlyError;
+        }
+        if (statusCode === 400) {
+          const errorMsg = body?.errors?.[0]?.message || error.message;
+          const friendlyError = new Error(`SendGrid validation error: ${errorMsg}`);
+          friendlyError.statusCode = 400;
+          friendlyError.originalError = error;
+          throw friendlyError;
+        }
+      }
+
+      // Re-throw with enhanced info
+      const enhancedError = new Error(error.message || 'SendGrid API error');
+      enhancedError.originalError = error;
+      enhancedError.statusCode = error.response?.statusCode;
+      throw enhancedError;
+    }
   }
 
   /**
@@ -116,9 +198,13 @@ class EmailService {
         } catch (error) {
           lastError = error;
           console.error(`❌ SendGrid API attempt ${attempt}/${maxRetries} failed:`, error.message);
+          if (error.response) {
+            console.error('   Status Code:', error.response.statusCode);
+            console.error('   Response Body:', JSON.stringify(error.response.body, null, 2));
+          }
 
-          // Don't retry on authentication errors
-          if (error.code === 401 || error.code === 403) {
+          // Don't retry on authentication/authorization errors
+          if (error.code === 401 || error.code === 403 || error.response?.statusCode === 401 || error.response?.statusCode === 403) {
             throw error;
           }
 
@@ -168,6 +254,19 @@ class EmailService {
    */
   async sendOtpEmail(to, otp, userName = 'User') {
     try {
+      // Validate configuration before sending
+      if (!config.email.sendgridApiKey) {
+        throw new Error('SENDGRID_API_KEY is not configured. Please set it in environment variables.');
+      }
+
+      if (!config.email.fromEmail) {
+        throw new Error('EMAIL_FROM is not configured. Please set it in environment variables.');
+      }
+
+      if (!this.isReady) {
+        throw new Error('Email service is not initialized. Please check your configuration.');
+      }
+
       const mailOptions = {
         from: `"${config.email.fromName}" <${config.email.fromEmail}>`,
         to,
@@ -179,17 +278,42 @@ class EmailService {
 
       if (config.nodeEnv !== 'production') {
         console.log('📧 Email sent: %s', info.messageId);
-        console.log('📧 Preview URL: %s', nodemailer.getTestMessageUrl(info));
+        if (info.previewUrl) {
+          console.log('📧 Preview URL: %s', info.previewUrl);
+        }
       }
 
       return {
         success: true,
         messageId: info.messageId,
-        previewUrl: nodemailer.getTestMessageUrl(info),
+        previewUrl: info.previewUrl,
       };
     } catch (error) {
-      console.error('❌ Error sending OTP email:', error);
-      throw new Error(`Failed to send OTP email: ${error.message}`);
+      // Enhanced error logging - always log in production for debugging
+      console.error('❌ Error sending OTP email:', error.message);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        statusCode: error.response?.statusCode,
+        response: error.response?.body,
+        stack: config.nodeEnv === 'production' ? error.stack : undefined, // Only log stack in production for debugging
+      });
+
+      // Log SendGrid specific errors
+      if (error.response) {
+        console.error('SendGrid API Response:', {
+          statusCode: error.response.statusCode,
+          body: JSON.stringify(error.response.body, null, 2),
+          headers: error.response.headers,
+        });
+      }
+
+      // Preserve original error message for better debugging
+      const errorMessage = error.message || 'Failed to send OTP email';
+      const enhancedError = new Error(errorMessage);
+      enhancedError.originalError = error;
+      enhancedError.statusCode = error.response?.statusCode;
+      throw enhancedError;
     }
   }
 
@@ -412,4 +536,15 @@ class EmailService {
   }
 }
 
-module.exports = EmailService;
+// Export singleton instance instead of class
+let emailServiceInstance = null;
+
+module.exports = function () {
+  if (!emailServiceInstance) {
+    emailServiceInstance = new EmailService();
+  }
+  return emailServiceInstance;
+};
+
+// Also export class for backward compatibility if needed
+module.exports.EmailService = EmailService;
