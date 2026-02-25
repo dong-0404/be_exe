@@ -19,14 +19,10 @@ const config = {
     // Security
     bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS || '10', 10),
 
-    // Email
+    // Email - SendGrid only
     email: {
-        // SendGrid API Key (recommended for Render/production)
+        // SendGrid API Key
         sendgridApiKey: process.env.SENDGRID_API_KEY,
-        // SMTP Configuration (alternative)
-        service: process.env.EMAIL_SERVICE, // 'gmail', 'outlook', etc.
-        user: process.env.EMAIL_USER,
-        password: process.env.EMAIL_PASSWORD,
         fromEmail: process.env.EMAIL_FROM || 'noreply@tutorplatform.com',
         fromName: process.env.EMAIL_FROM_NAME || 'Tutor Platform',
     },
