@@ -1,12 +1,24 @@
 const nodemailer = require('nodemailer');
 const config = require('../config/env');
 
+// SendGrid Web API (not SMTP - works on Render)
+let sgMail = null;
+if (config.email.sendgridApiKey) {
+  try {
+    sgMail = require('@sendgrid/mail');
+    sgMail.setApiKey(config.email.sendgridApiKey);
+  } catch (error) {
+    console.warn('⚠️  @sendgrid/mail package not installed. Run: npm install @sendgrid/mail');
+  }
+}
+
 /**
  * Email Service - Handles sending emails
  */
 class EmailService {
   constructor() {
     this.transporter = null;
+    this.useSendGridApi = false; // Flag to use SendGrid Web API instead of SMTP
     this.initTransporter();
   }
 
@@ -14,146 +26,115 @@ class EmailService {
    * Initialize email transporter
    */
   initTransporter() {
-    // Check if using SendGrid API (recommended for Render)
+    // SendGrid Web API (not SMTP - works on Render)
+    if (config.email.sendgridApiKey && sgMail) {
+      this.useSendGridApi = true;
+      this.isReady = true;
+      console.log('✅ Email service initialized with SendGrid Web API (not blocked by Render)');
+      return;
+    }
+
+    // Fallback: SendGrid SMTP (may be blocked by Render)
     if (config.email.sendgridApiKey) {
       this.transporter = nodemailer.createTransport({
         host: 'smtp.sendgrid.net',
         port: 587,
-        secure: false, // true for 465, false for other ports
+        secure: false,
         auth: {
           user: 'apikey',
           pass: config.email.sendgridApiKey,
         },
-        // Connection timeout settings for Render
-        connectionTimeout: 60000, // 60 seconds
-        greetingTimeout: 30000, // 30 seconds
-        socketTimeout: 60000, // 60 seconds
-        // Retry settings
+        connectionTimeout: 120000,
+        greetingTimeout: 60000,
+        socketTimeout: 120000,
         pool: true,
         maxConnections: 1,
         maxMessages: 3,
       });
       this.isReady = true;
-      console.log('✅ Email service initialized with SendGrid');
+      console.log('✅ Email service initialized with SendGrid SMTP');
+      console.log('⚠️  Warning: SendGrid SMTP may be blocked by Render. Install @sendgrid/mail to use Web API instead.');
       return;
     }
 
-    // Check if using SMTP with service name (Gmail, etc.)
-    if (config.email.service && config.email.user && config.email.password) {
-      // Determine port and secure based on service
-      const smtpConfig = this.getSmtpConfig(config.email.service);
-
-      this.transporter = nodemailer.createTransport({
-        service: config.email.service,
-        host: smtpConfig.host,
-        port: smtpConfig.port,
-        secure: smtpConfig.secure,
-        auth: {
-          user: config.email.user,
-          pass: config.email.password,
-        },
-        // Connection timeout settings for Render
-        connectionTimeout: 60000, // 60 seconds
-        greetingTimeout: 30000, // 30 seconds
-        socketTimeout: 60000, // 60 seconds
-        // Retry settings
-        pool: true,
-        maxConnections: 1,
-        maxMessages: 3,
-        // TLS options
-        tls: {
-          rejectUnauthorized: true, // Verify certificates
-          minVersion: 'TLSv1.2', // Use TLS 1.2 or higher
-        },
-      });
-      this.isReady = true;
-      console.log(`✅ Email service initialized with ${config.email.service}`);
-      return;
-    }
-
-    // Fallback to Ethereal for development
-    this.createEtherealTransporter();
-  }
-
-  /**
-   * Get SMTP configuration for different services
-   */
-  getSmtpConfig(service) {
-    const configs = {
-      gmail: {
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-      },
-      outlook: {
-        host: 'smtp-mail.outlook.com',
-        port: 587,
-        secure: false,
-      },
-      yahoo: {
-        host: 'smtp.mail.yahoo.com',
-        port: 587,
-        secure: false,
-      },
-      // Add more services as needed
-    };
-
-    return configs[service.toLowerCase()] || {
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-    };
-  }
-
-  /**
-   * Create ethereal test account for development
-   */
-  async createEtherealTransporter() {
-    try {
-      const testAccount = await nodemailer.createTestAccount();
-      this.transporter = nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
-        secure: false,
-        auth: {
-          user: testAccount.user,
-          pass: testAccount.pass,
-        },
-      });
-      this.isReady = true;
-    } catch (error) {
-      this.isReady = false;
-    }
+    // No email service configured
+    console.error('❌ No email service configured. Please set SENDGRID_API_KEY environment variable.');
+    this.isReady = false;
   }
 
   /**
    * Wait for transporter to be ready
    */
   async waitForReady() {
-    // If using real SMTP (SendGrid or other), it's ready immediately
-    if (config.email.sendgridApiKey ||
-      (config.email.service && config.email.user && config.email.password)) {
+    // If using SendGrid (Web API or SMTP), it's ready immediately
+    if (config.email.sendgridApiKey && this.isReady) {
       return;
     }
 
-    // Wait for Ethereal to be ready
-    let attempts = 0;
-    while (!this.isReady && attempts < 10) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      attempts++;
+    // If not ready, throw error
+    if (!this.isReady) {
+      throw new Error('Email service failed to initialize. Please check SENDGRID_API_KEY environment variable.');
+    }
+  }
+
+  /**
+   * Send email via SendGrid Web API
+   */
+  async sendViaSendGridApi(mailOptions) {
+    if (!sgMail) {
+      throw new Error('SendGrid Web API not available. Please install @sendgrid/mail package.');
     }
 
-    if (!this.isReady) {
-      throw new Error('Email service failed to initialize');
-    }
+    const msg = {
+      to: mailOptions.to,
+      from: {
+        email: config.email.fromEmail,
+        name: config.email.fromName || 'Tutor Platform',
+      },
+      subject: mailOptions.subject,
+      html: mailOptions.html,
+    };
+
+    const response = await sgMail.send(msg);
+    return {
+      messageId: response[0].headers['x-message-id'] || 'sendgrid-' + Date.now(),
+      response: response[0],
+    };
   }
 
   /**
    * Send email with retry logic
    */
   async sendEmailWithRetry(mailOptions, maxRetries = 3) {
-    let lastError;
+    // Use SendGrid Web API if available (not blocked by Render)
+    if (this.useSendGridApi) {
+      let lastError;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const info = await this.sendViaSendGridApi(mailOptions);
+          return info;
+        } catch (error) {
+          lastError = error;
+          console.error(`❌ SendGrid API attempt ${attempt}/${maxRetries} failed:`, error.message);
 
+          // Don't retry on authentication errors
+          if (error.code === 401 || error.code === 403) {
+            throw error;
+          }
+
+          // Wait before retry
+          if (attempt < maxRetries) {
+            const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+            console.log(`⏳ Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+        }
+      }
+      throw lastError;
+    }
+
+    // Use SMTP for other services
+    let lastError;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         // Wait for transporter to be ready
