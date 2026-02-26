@@ -7,23 +7,20 @@ import { AvatarUpload } from '../../features/profile/components/AvatarUpload'
 import { getCurrentUser } from '../../features/auth/utils/authHelpers'
 import { UserRole } from '../../features/auth/types'
 import { profileApi } from '../../features/profile/api/profileApi'
-import { useAppDispatch, useAppSelector } from '../../app/hooks'
-import { fetchTutorDetail } from '../../features/findTutor/findTutorThunks'
-import { selectTutorDetail, selectLoadingDetail } from '../../features/findTutor/findTutorSelector'
 import { tutorApi } from '../../features/findTutor/api'
 import { routes } from '../../config/routes'
-import type { Subject, Grade } from '../../features/findTutor/types'
+import type { Subject, Grade, TutorDetail } from '../../features/findTutor/types'
 import './ProfilePage.css'
 
 export const TutorProfilePage = () => {
     const navigate = useNavigate()
-    const dispatch = useAppDispatch()
     const currentUser = getCurrentUser()
     const userId = currentUser?._id
 
-    // Redux state
-    const tutorDetail = useAppSelector(selectTutorDetail)
-    const loadingDetail = useAppSelector(selectLoadingDetail)
+    // Local state for tutor profile (không dùng chung Redux với TutorDetailPage)
+    // Dùng TutorDetail type để có đầy đủ data structure (subjects, grades là objects, không phải IDs)
+    const [tutorProfile, setTutorProfile] = useState<TutorDetail | null>(null)
+    const [loadingProfile, setLoadingProfile] = useState(false)
 
     const [activeTab, setActiveTab] = useState('profile')
     const [saving, setSaving] = useState(false)
@@ -60,7 +57,7 @@ export const TutorProfilePage = () => {
         avatar: ''
     })
 
-    // Load tutor detail and subjects/grades on mount
+    // Load tutor profile and subjects/grades on mount
     useEffect(() => {
         const loadData = async () => {
             if (!userId) {
@@ -70,71 +67,115 @@ export const TutorProfilePage = () => {
 
             // Mark that we've attempted to fetch
             setHasFetched(true)
+            setLoadingProfile(true)
+            setError(null)
 
-            // Fetch tutor detail using Redux thunk (same as TutorDetailPage)
-            dispatch(fetchTutorDetail(userId))
-
-            // Load subjects and grades
             try {
-                const [subjectsResponse, gradesResponse] = await Promise.all([
+                // Bước 1: Lấy tutor profile ID từ userId (giống như cách TutorDetailPage lấy id từ URL)
+                // API này trả về TutorProfileData có _id là tutor profile ID
+                const profileResponse = await profileApi.getTutorProfile(userId)
+
+                if (!profileResponse.success || !profileResponse.data || !profileResponse.data._id) {
+                    // Nếu không có profile → chưa setup → redirect đến setup
+                    console.log('No tutor profile found, redirecting to setup')
+                    navigate(routes.setupTutor, { replace: true })
+                    return
+                }
+
+                // Bước 2: Lấy tutor profile ID (giống như id trong TutorDetailPage)
+                const tutorProfileId = profileResponse.data._id
+
+                // Bước 3: Dùng tutor profile ID để lấy đầy đủ data (giống TutorDetailPage)
+                // TutorDetailPage: dispatch(fetchTutorDetail(id)) với id là tutor profile ID
+                // Ở đây: gọi trực tiếp tutorApi.getTutorDetail(tutorProfileId) - cùng API, cùng ID
+                const [tutorDetailResponse, subjectsResponse, gradesResponse] = await Promise.all([
+                    tutorApi.getTutorDetail(tutorProfileId), // Dùng tutor profile ID (giống TutorDetailPage)
                     tutorApi.getSubjects(),
                     tutorApi.getGrades()
                 ])
 
+                // Handle tutor detail response - giống Redux thunk: lấy response.data
+                if (tutorDetailResponse.success && tutorDetailResponse.data) {
+                    // Lưu trực tiếp data vào local state (giống như Redux lưu vào state.tutorDetail)
+                    setTutorProfile(tutorDetailResponse.data)
+                } else {
+                    // Nếu không lấy được detail → có thể profile chưa hoàn thiện
+                    console.log('Tutor detail not found, redirecting to setup')
+                    navigate(routes.setupTutor, { replace: true })
+                    return
+                }
+
+                // Handle subjects and grades
                 if (subjectsResponse.success && subjectsResponse.data) {
                     setSubjects(subjectsResponse.data)
                 }
                 if (gradesResponse.success && gradesResponse.data) {
                     setGrades(gradesResponse.data)
                 }
-            } catch (err) {
-                console.error('Load subjects/grades error:', err)
+            } catch (err: unknown) {
+                console.error('Load profile error:', err)
+
+                // Phân biệt các loại lỗi
+                const statusCode = (err as { response?: { status?: number }; statusCode?: number })?.response?.status ||
+                    (err as { statusCode?: number })?.statusCode
+
+                if (statusCode === 404) {
+                    // 404 = Không tìm thấy profile → chưa setup → redirect đến setup
+                    console.log('Tutor profile not found (404), redirecting to setup')
+                    navigate(routes.setupTutor, { replace: true })
+                } else {
+                    // Lỗi khác (network, 500, etc.) → hiển thị error, không redirect
+                    setError('Không thể tải thông tin hồ sơ. Vui lòng thử lại sau.')
+                    // Không redirect, để user có thể thử lại
+                }
+            } finally {
+                setLoadingProfile(false)
             }
         }
 
         loadData()
-    }, [userId, dispatch, navigate])
+    }, [userId, navigate])
 
-    // Update form data when tutorDetail is loaded
+    // Update form data when tutorProfile is loaded
     useEffect(() => {
-        if (tutorDetail) {
+        if (tutorProfile) {
             // Format date for input[type="date"]
-            const formattedDate = tutorDetail.dateOfBirth
-                ? new Date(tutorDetail.dateOfBirth).toISOString().split('T')[0]
+            const formattedDate = tutorProfile.dateOfBirth
+                ? new Date(tutorProfile.dateOfBirth).toISOString().split('T')[0]
                 : ''
 
             // Extract certificate info (use first certificate if available)
-            const firstCert = tutorDetail.certificates && tutorDetail.certificates.length > 0
-                ? tutorDetail.certificates[0]
+            const firstCert = tutorProfile.certificates && tutorProfile.certificates.length > 0
+                ? tutorProfile.certificates[0]
                 : null
 
             // Extract all certificate images
-            const allCertImages = tutorDetail.certificates
-                ? tutorDetail.certificates.flatMap(cert => cert.images || [])
+            const allCertImages = tutorProfile.certificates
+                ? tutorProfile.certificates.flatMap(cert => cert.images || [])
                 : []
 
             setFormData({
-                fullName: tutorDetail.fullName || '',
-                email: tutorDetail.userId?.email || currentUser?.email || '',
-                phone: tutorDetail.userId?.phone || currentUser?.phone || '',
+                fullName: tutorProfile.fullName || '',
+                email: tutorProfile.userId?.email || currentUser?.email || '',
+                phone: tutorProfile.userId?.phone || currentUser?.phone || '',
                 dateOfBirth: formattedDate,
-                placeOfBirth: tutorDetail.placeOfBirth || '',
-                gender: Number(tutorDetail.gender) || 1,
-                hourlyRate: tutorDetail.hourlyRate?.toString() || '',
-                teachingArea: tutorDetail.teachingArea || '',
-                identityNumber: tutorDetail.identityNumber || '',
+                placeOfBirth: tutorProfile.placeOfBirth || '',
+                gender: Number(tutorProfile.gender) || 1,
+                hourlyRate: tutorProfile.hourlyRate?.toString() || '',
+                teachingArea: tutorProfile.teachingArea || '',
+                identityNumber: tutorProfile.identityNumber || '',
                 schoolName: firstCert?.schoolName || '',
                 major: firstCert?.major || '',
                 educationStatus: firstCert?.educationStatus || 0,
                 certificateImages: allCertImages,
-                subjects: tutorDetail.subjects?.map(s => s._id) || [],
-                grades: tutorDetail.grades?.map(g => g._id) || [],
-                availableDays: tutorDetail.availableDays || [],
-                availableTimeSlots: tutorDetail.availableTimeSlots || [],
-                avatar: tutorDetail.avatarUrl || ''
+                subjects: tutorProfile.subjects?.map(s => s._id) || [],
+                grades: tutorProfile.grades?.map(g => g._id) || [],
+                availableDays: tutorProfile.availableDays || [],
+                availableTimeSlots: tutorProfile.availableTimeSlots || [],
+                avatar: tutorProfile.avatarUrl || ''
             })
         }
-    }, [tutorDetail, currentUser?.email, currentUser?.phone])
+    }, [tutorProfile, currentUser?.email, currentUser?.phone])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
@@ -229,6 +270,30 @@ export const TutorProfilePage = () => {
             if (response.success) {
                 setSuccessMessage('Cập nhật hồ sơ thành công!')
 
+                // Reload profile data để có data mới nhất
+                // Dùng tutor profile ID từ state hiện tại (giống TutorDetailPage dùng id từ URL)
+                try {
+                    const currentTutorId = tutorProfile?._id
+                    if (currentTutorId) {
+                        // Dùng tutor profile ID để reload (giống TutorDetailPage)
+                        const tutorDetailResponse = await tutorApi.getTutorDetail(currentTutorId)
+                        if (tutorDetailResponse.success && tutorDetailResponse.data) {
+                            setTutorProfile(tutorDetailResponse.data)
+                        }
+                    } else {
+                        // Nếu không có tutor ID, reload lại từ đầu
+                        const profileResponse = await profileApi.getTutorProfile(userId!)
+                        if (profileResponse.success && profileResponse.data?._id) {
+                            const tutorDetailResponse = await tutorApi.getTutorDetail(profileResponse.data._id)
+                            if (tutorDetailResponse.success && tutorDetailResponse.data) {
+                                setTutorProfile(tutorDetailResponse.data)
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error('Reload profile error:', err)
+                }
+
                 // Clear avatar file after successful upload
                 setAvatarFile(null)
 
@@ -252,7 +317,7 @@ export const TutorProfilePage = () => {
     }
 
     // Loading state - show spinner while loading OR before first fetch
-    if (loadingDetail || !hasFetched) {
+    if (loadingProfile || !hasFetched) {
         return (
             <ProfileLayout
                 role={UserRole.TUTOR}
@@ -267,9 +332,9 @@ export const TutorProfilePage = () => {
         )
     }
 
-    // If finished loading but no tutor detail, redirect to setup
+    // If finished loading but no tutor profile, redirect to setup
     // Only redirect after we've attempted to fetch (hasFetched = true)
-    if (hasFetched && !loadingDetail && !tutorDetail) {
+    if (hasFetched && !loadingProfile && !tutorProfile) {
         navigate(routes.setupTutor, { replace: true })
         return null
     }

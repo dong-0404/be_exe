@@ -46,6 +46,8 @@ export const TutorDetailPage = () => {
     // Fetch tutor detail và feedbacks khi component mount
     useEffect(() => {
         if (id) {
+            // Luôn fetch lại để đảm bảo data đúng với ID trong URL
+            // Tránh trường hợp dùng data cũ từ Redux state
             dispatch(fetchTutorDetail(id))
             dispatch(fetchTutorFeedbacks({ tutorId: id, page: 1, limit: 10 }))
         }
@@ -58,6 +60,10 @@ export const TutorDetailPage = () => {
         }
     }
 
+    // Validate: Đảm bảo tutorDetail khớp với ID trong URL
+    // Tránh hiển thị data của tutor khác khi navigate giữa các trang
+    const isValidTutorDetail = tutorDetail && id && tutorDetail._id === id
+
     if (loadingDetail) {
         return (
             <div className="loading-container">
@@ -68,7 +74,8 @@ export const TutorDetailPage = () => {
         )
     }
 
-    if (!tutorDetail) {
+    // Nếu không có tutorDetail hoặc tutorDetail không khớp với ID trong URL
+    if (!tutorDetail || !isValidTutorDetail) {
         return (
             <Container className="py-5">
                 <div className="alert alert-warning">Không tìm thấy thông tin gia sư</div>

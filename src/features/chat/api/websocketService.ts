@@ -3,7 +3,6 @@
  */
 
 import { io, type Socket } from 'socket.io-client'
-import { env } from '../../../config/env'
 import type { WSEvent, Message, MessageReadEvent, TypingEvent, UserStatusEvent } from '../types'
 
 type MessageCallback = (event: WSEvent) => void
