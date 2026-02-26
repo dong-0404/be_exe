@@ -72,8 +72,14 @@ router.post('/profile', flexibleAuth, tutorController.createProfile.bind(tutorCo
  * @body    Required if no token: email
  * @body    Step 2: identityNumber
  * @body    Step 3: subjects[], grades[], availableDays[], availableTimeSlots[]
+ * @body    Optional: avatar (file)
  */
-router.put('/profile', flexibleAuth, tutorController.updateProfile.bind(tutorController));
+router.put(
+    '/profile',
+    flexibleAuth,
+    uploadSingleOptional('avatar'),
+    tutorController.updateProfile.bind(tutorController)
+);
 
 /**
  * @route   GET /tutors/profile/progress

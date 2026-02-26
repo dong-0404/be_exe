@@ -1,10 +1,12 @@
 const TutorService = require('../services/tutor.service');
 const UserService = require('../services/user.service');
+const CloudinaryService = require('../services/cloudinary.service');
 const { success } = require('../utils/response');
 const { UserStatus } = require('../constants/enums');
 
 const tutorService = new TutorService();
 const userService = new UserService();
+const cloudinaryService = new CloudinaryService();
 
 /**
  * Tutor Controller - HTTP Layer
@@ -94,6 +96,74 @@ class TutorController {
                 }
 
                 userId = user._id;
+            }
+
+            // Get tutor profile to check if exists
+            const tutor = await tutorService.getTutorByUserId(userId);
+
+            // Handle avatar upload if file is provided
+            if (req.file) {
+                try {
+                    const uploadResult = await cloudinaryService.uploadImage(
+                        req.file.path,
+                        { folder: 'tutor-avatars' }
+                    );
+                    req.body.avatarUrl = uploadResult.url;
+                } catch (uploadErr) {
+                    const error = new Error('Failed to upload avatar: ' + uploadErr.message);
+                    error.statusCode = 500;
+                    throw error;
+                }
+            }
+
+            // Normalize array fields from multipart/form-data
+            // Multer automatically creates arrays for multiple fields with same name
+            // But we need to ensure single values are also handled
+            if (req.body.subjects !== undefined) {
+                if (!Array.isArray(req.body.subjects)) {
+                    req.body.subjects = [req.body.subjects];
+                }
+                // Filter out empty values
+                req.body.subjects = req.body.subjects.filter(s => s && s.trim && s.trim() !== '');
+            }
+            if (req.body.grades !== undefined) {
+                if (!Array.isArray(req.body.grades)) {
+                    req.body.grades = [req.body.grades];
+                }
+                // Filter out empty values
+                req.body.grades = req.body.grades.filter(g => g && g.trim && g.trim() !== '');
+            }
+            if (req.body.availableDays !== undefined) {
+                if (!Array.isArray(req.body.availableDays)) {
+                    req.body.availableDays = [req.body.availableDays];
+                }
+                // Parse to integers and filter out invalid values
+                req.body.availableDays = req.body.availableDays
+                    .map(d => parseInt(d))
+                    .filter(d => !isNaN(d));
+            }
+            if (req.body.availableTimeSlots !== undefined) {
+                if (!Array.isArray(req.body.availableTimeSlots)) {
+                    req.body.availableTimeSlots = [req.body.availableTimeSlots];
+                }
+                // Filter out empty values
+                req.body.availableTimeSlots = req.body.availableTimeSlots.filter(s => s && s.trim && s.trim() !== '');
+            }
+
+            // Handle certificate data if provided (schoolName, major, educationStatus)
+            const { schoolName, major, educationStatus } = req.body;
+            if (schoolName && major && educationStatus) {
+                // Remove certificate fields from updateData to avoid confusion
+                delete req.body.schoolName;
+                delete req.body.major;
+                delete req.body.educationStatus;
+
+                // Create certificate (no images in this request, only data)
+                await tutorService.addCertificate(
+                    tutor._id,
+                    { schoolName, major, educationStatus: parseInt(educationStatus) },
+                    [] // No images
+                );
             }
 
             // Update profile
