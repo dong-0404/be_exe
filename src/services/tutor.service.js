@@ -146,7 +146,33 @@ class TutorService {
      * @returns {Promise<Object>} Updated tutor profile
      */
     async updateProfile(userId, updateData) {
+        // Validate userId
+        if (!userId) {
+            const error = new Error('User ID is required');
+            error.statusCode = 400;
+            throw error;
+        }
+
         const tutor = await this.getTutorByUserId(userId);
+
+        // Validate tutor exists
+        if (!tutor) {
+            const error = new Error('Tutor profile not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        // Initialize completedSteps if not exists
+        if (!tutor.completedSteps) {
+            tutor.completedSteps = [];
+        }
+
+        // Protect profileStatus: if already APPROVED, don't allow changing it from request
+        // Only system can change APPROVED status (e.g., admin approval/rejection)
+        if (tutor.profileStatus === TutorProfileStatus.APPROVED && updateData.profileStatus !== undefined) {
+            // Remove profileStatus from updateData to prevent unauthorized changes
+            delete updateData.profileStatus;
+        }
 
         // Determine which step is being updated based on data
         let stepCompleted = null;
@@ -197,7 +223,11 @@ class TutorService {
             tutor.completedSteps.includes(3) &&
             tutor.completedSteps.includes(4)) {
             tutor.isProfileComplete = true;
-            tutor.profileStatus = TutorProfileStatus.SUBMITTED;
+            // Only set to SUBMITTED if profile is not already APPROVED
+            // If profile is already APPROVED, keep the current status
+            if (tutor.profileStatus !== TutorProfileStatus.APPROVED) {
+                tutor.profileStatus = TutorProfileStatus.SUBMITTED;
+            }
         }
 
         await tutor.save();
