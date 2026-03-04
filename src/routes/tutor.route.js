@@ -1,10 +1,15 @@
 const express = require('express');
 const TutorController = require('../controllers/tutor.controller');
-const { authenticate, flexibleAuth } = require('../middlewares/auth.middleware');
+const ClassController = require('../controllers/class.controller');
+const ScheduleController = require('../controllers/schedule.controller');
+const { authenticate, flexibleAuth, authorize } = require('../middlewares/auth.middleware');
 const { uploadMultiple, uploadSingleOptional } = require('../middlewares/upload.middleware');
+const { UserRole } = require('../constants/enums');
 
 const router = express.Router();
 const tutorController = new TutorController();
+const classController = new ClassController();
+const scheduleController = new ScheduleController();
 
 /**
  * Public Tutor Routes (Search & List)
@@ -158,5 +163,47 @@ router.delete('/certificates/:id', authenticate, tutorController.deleteCertifica
  * @body    {string[]} imageUrls - Array of image URLs to remove
  */
 router.delete('/certificates/:id/images', authenticate, tutorController.removeCertificateImages.bind(tutorController));
+
+// =====================
+// Class Management Routes (tutor-scoped)
+// =====================
+
+/**
+ * @route  GET /tutors/me/classes
+ * @desc   Get all classes created by logged-in tutor
+ * @access Tutor
+ */
+router.get(
+  '/me/classes',
+  authenticate,
+  authorize(UserRole.TUTOR),
+  classController.getMyClasses.bind(classController)
+);
+
+/**
+ * @route  GET /tutors/me/schedules
+ * @desc   Get all schedules across all tutor's classes
+ * @access Tutor
+ * @query  from - YYYY-MM-DD
+ * @query  to   - YYYY-MM-DD
+ */
+router.get(
+  '/me/schedules',
+  authenticate,
+  authorize(UserRole.TUTOR),
+  scheduleController.getMySchedules.bind(scheduleController)
+);
+
+/**
+ * @route  GET /tutors/me/students
+ * @desc   Get all students across all tutor's classes
+ * @access Tutor
+ */
+router.get(
+  '/me/students',
+  authenticate,
+  authorize(UserRole.TUTOR),
+  classController.getMyStudents.bind(classController)
+);
 
 module.exports = router;

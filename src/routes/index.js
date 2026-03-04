@@ -8,6 +8,7 @@ const gradeRoutes = require('./grade.route');
 const communityRoutes = require('./community.route');
 const { router: chatRoutes, setMessageController } = require('./chat.route');
 const notificationRoutes = require('./notification.route');
+const classRoutes = require('./class.route');
 
 /**
  * Register all application routes
@@ -47,7 +48,8 @@ function registerRoutes(app) {
   // Notification routes
   app.use(`${API_PREFIX}/notifications`, notificationRoutes);
 
-  // Add more routes here as the application grows
+  // Class routes
+  app.use(`${API_PREFIX}/classes`, classRoutes);
 }
 
 module.exports = { registerRoutes, setMessageController };
