@@ -24,7 +24,8 @@ export const ProfileSidebar = ({ role, activeTab, onTabChange }: ProfileSidebarP
                 { id: 'schedule', label: 'Quản lý lịch học', icon: '📋', section: 'other' }
             ],
             [UserRole.TUTOR]: [
-                { id: 'schedule', label: 'Quản lý lịch dạy', icon: '📋', section: 'other' },
+                { id: 'classes', label: 'Lớp học', icon: '📚', section: 'other' },
+                { id: 'schedule', label: 'Quản lý lịch dạy', icon: '📅', section: 'other' },
                 { id: 'students', label: 'Quản lý học viên', icon: '👥', section: 'other' },
                 { id: 'earnings', label: 'Thống kê thu nhập', icon: '💰', section: 'other' }
             ],

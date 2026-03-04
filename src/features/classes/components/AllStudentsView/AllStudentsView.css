@@ -1,0 +1,54 @@
+.all-students-container {
+  /* main wrapper */
+}
+
+.all-students-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.all-students-empty {
+  text-align: center;
+  padding: 60px 24px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.all-students-table-wrap {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.all-students-table th {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  background: #f8f9fa;
+  white-space: nowrap;
+}
+
+.all-students-table td {
+  vertical-align: middle;
+  font-size: 14px;
+}
+
+.student-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0066cc, #6366F1);
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

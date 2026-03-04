@@ -1,0 +1,177 @@
+.all-schedules-container {
+  /* main wrapper */
+}
+
+/* Toolbar */
+.all-schedules-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.all-schedules-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.week-nav-btn {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.15s;
+}
+
+.week-nav-btn:hover {
+  background: #f0f4ff;
+  border-color: #0066cc;
+  color: #0066cc;
+}
+
+.week-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+  min-width: 140px;
+  text-align: center;
+}
+
+.week-today-btn {
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #0066cc;
+  transition: all 0.15s;
+}
+
+.week-today-btn:hover {
+  background: #f0f4ff;
+  border-color: #0066cc;
+}
+
+/* Empty state */
+.all-schedules-empty {
+  text-align: center;
+  padding: 60px 24px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+/* Schedule list */
+.all-schedules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Day group */
+.schedule-day-group {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.schedule-day-group.today {
+  border-color: #0066cc;
+}
+
+.schedule-day-group.past {
+  opacity: 0.75;
+}
+
+.schedule-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 18px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.schedule-day-group.today .schedule-day-header {
+  background: #e8f0fe;
+}
+
+.schedule-day-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  text-transform: capitalize;
+}
+
+.schedule-day-count {
+  font-size: 12px;
+  color: #888;
+}
+
+/* Schedule row */
+.schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.1s;
+}
+
+.schedule-row:last-child {
+  border-bottom: none;
+}
+
+.schedule-row:hover {
+  background: #fafbff;
+}
+
+.schedule-row__time {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  min-width: 100px;
+  white-space: nowrap;
+}
+
+.schedule-row__body {
+  flex: 1;
+  font-size: 14px;
+}
+
+.schedule-row__class {
+  font-weight: 600;
+  color: #0066cc;
+}
+
+.schedule-row__title {
+  color: #666;
+}
+
+.schedule-row__link {
+  background: none;
+  border: none;
+  color: #0066cc;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.schedule-row__link:hover {
+  background: #e8f0fe;
+}

@@ -10,6 +10,10 @@ import { profileApi } from '../../features/profile/api/profileApi'
 import { tutorApi } from '../../features/findTutor/api'
 import { routes } from '../../config/routes'
 import type { Subject, Grade, TutorDetail } from '../../features/findTutor/types'
+import { ClassList } from '../../features/classes/components/ClassList'
+import { ClassDetail } from '../../features/classes/components/ClassDetail'
+import { AllSchedulesView } from '../../features/classes/components/AllSchedulesView'
+import { AllStudentsView } from '../../features/classes/components/AllStudentsView'
 import './ProfilePage.css'
 
 export const TutorProfilePage = () => {
@@ -23,6 +27,7 @@ export const TutorProfilePage = () => {
     const [loadingProfile, setLoadingProfile] = useState(false)
 
     const [activeTab, setActiveTab] = useState('profile')
+    const [selectedClassId, setSelectedClassId] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -807,17 +812,39 @@ export const TutorProfilePage = () => {
                 </div>
             )}
 
+            {activeTab === 'classes' && (
+                <div>
+                    <ProfileHeader
+                        title={selectedClassId ? 'Chi tiết lớp học' : 'Lớp học'}
+                        description={selectedClassId ? 'Quản lý thành viên và lịch học của lớp' : 'Tạo và quản lý các lớp học của bạn'}
+                    />
+                    <div style={{ marginTop: 24 }}>
+                        {selectedClassId ? (
+                            <ClassDetail
+                                classId={selectedClassId}
+                                onBack={() => setSelectedClassId(null)}
+                            />
+                        ) : (
+                            <ClassList onSelectClass={(id) => setSelectedClassId(id)} />
+                        )}
+                    </div>
+                </div>
+            )}
+
             {activeTab === 'schedule' && (
                 <div>
                     <ProfileHeader
                         title="Quản lý lịch dạy"
-                        description="Xem và quản lý lịch dạy của bạn"
+                        description="Toàn bộ lịch dạy từ các lớp học của bạn"
                     />
-                    <Card className="profile-card">
-                        <Card.Body>
-                            <p>Lịch dạy content here...</p>
-                        </Card.Body>
-                    </Card>
+                    <div style={{ marginTop: 24 }}>
+                        <AllSchedulesView
+                            onGoToClass={(classId) => {
+                                setSelectedClassId(classId)
+                                setActiveTab('classes')
+                            }}
+                        />
+                    </div>
                 </div>
             )}
 
@@ -825,13 +852,16 @@ export const TutorProfilePage = () => {
                 <div>
                     <ProfileHeader
                         title="Quản lý học viên"
-                        description="Danh sách học viên của bạn"
+                        description="Toàn bộ học viên từ các lớp học của bạn"
                     />
-                    <Card className="profile-card">
-                        <Card.Body>
-                            <p>Danh sách học viên content here...</p>
-                        </Card.Body>
-                    </Card>
+                    <div style={{ marginTop: 24 }}>
+                        <AllStudentsView
+                            onGoToClass={(classId) => {
+                                setSelectedClassId(classId)
+                                setActiveTab('classes')
+                            }}
+                        />
+                    </div>
                 </div>
             )}
 

@@ -1,0 +1,225 @@
+.class-detail-container {
+  /* container inside profile content */
+}
+
+/* Header */
+.class-detail-header {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.class-detail__back-btn {
+  background: none;
+  border: none;
+  color: #0066cc;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.class-detail__back-btn:hover {
+  text-decoration: underline;
+}
+
+.class-detail__info {
+  flex: 1;
+}
+
+.class-detail__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 6px;
+}
+
+.class-detail__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.class-detail__invite-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f0f4ff;
+  border: 1px solid #c7d8f5;
+  border-radius: 10px;
+  padding: 10px 16px;
+}
+
+.class-detail__invite-code {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: #0066cc;
+}
+
+/* Sub-tabs */
+.class-detail__tabs {
+  display: flex;
+  gap: 0;
+  margin-top: 20px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.class-detail__tab-btn {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+
+.class-detail__tab-btn:hover {
+  color: #0066cc;
+}
+
+.class-detail__tab-btn.active {
+  color: #0066cc;
+  border-bottom-color: #0066cc;
+  font-weight: 600;
+}
+
+/* Schedule list */
+.class-schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.class-schedule-item {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.15s;
+}
+
+.class-schedule-item:hover {
+  border-color: #0066cc;
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.08);
+}
+
+.class-schedule-item__date {
+  text-align: center;
+  min-width: 52px;
+  background: #f0f4ff;
+  border-radius: 8px;
+  padding: 8px 6px;
+}
+
+.class-schedule-item__day {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0066cc;
+  text-transform: uppercase;
+}
+
+.class-schedule-item__num {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.class-schedule-item__body {
+  flex: 1;
+}
+
+.class-schedule-item__time {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.class-schedule-item__title {
+  font-size: 13px;
+  color: #666;
+  margin-top: 3px;
+}
+
+.class-schedule-item__attendance {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.class-schedule-item__btn-attendance {
+  background: none;
+  border: none;
+  color: #0066cc;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.class-schedule-item__btn-attendance:hover {
+  color: #004fa3;
+}
+
+.class-schedule-item__actions {
+  display: flex;
+  gap: 4px;
+}
+
+.class-schedule-item__btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+  opacity: 0.6;
+}
+
+.class-schedule-item__btn:hover {
+  opacity: 1;
+  background: #f0f0f0;
+}
+
+/* Members table */
+.class-members-table th {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  background: #f8f9fa;
+}
+
+.class-members-table td {
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.member-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0066cc, #6366F1);
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

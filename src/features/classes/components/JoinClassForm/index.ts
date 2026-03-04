@@ -1,0 +1,1 @@
+export { JoinClassForm } from './JoinClassForm'

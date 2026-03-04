@@ -1,0 +1,1 @@
+export { CreateClassModal } from './CreateClassModal'

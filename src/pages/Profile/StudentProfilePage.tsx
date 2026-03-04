@@ -9,6 +9,7 @@ import { UserRole } from '../../features/auth/types'
 import { profileApi } from '../../features/profile/api/profileApi'
 import { routes } from '../../config/routes'
 import type { StudentProfileData } from '../../features/profile/types/studentProfile'
+import { StudentScheduleView } from '../../features/classes/components/StudentScheduleView'
 import './ProfilePage.css'
 
 export const StudentProfilePage = () => {
@@ -364,13 +365,11 @@ export const StudentProfilePage = () => {
                 <div>
                     <ProfileHeader
                         title="Quản lý lịch học"
-                        description="Xem và quản lý lịch học của bạn"
+                        description="Xem lịch học, tham gia lớp và điểm danh của bạn"
                     />
-                    <Card className="profile-card">
-                        <Card.Body>
-                            <p>Lịch học content here...</p>
-                        </Card.Body>
-                    </Card>
+                    <div style={{ marginTop: 24 }}>
+                        <StudentScheduleView />
+                    </div>
                 </div>
             )}
         </ProfileLayout>
