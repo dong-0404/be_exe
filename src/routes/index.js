@@ -18,10 +18,6 @@ const { router: chatRoutes, setMessageController } = require('./chat.route');
 
 const notificationRoutes = require('./notification.route');
 
-const adminRoutes = require('./admin.route');
-
-
-
 /**
 
  * Register all application routes
@@ -96,13 +92,7 @@ function registerRoutes(app) {
 
   app.use(`${API_PREFIX}/notifications`, notificationRoutes);
 
-
-
-  // Admin routes
-  app.use(`${API_PREFIX}/admin`, adminRoutes);
-
   // Add more routes here as the application grows
-
 }
 
 

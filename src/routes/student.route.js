@@ -1,5 +1,7 @@
 const { Router } = require('express');
 const StudentController = require('../controllers/student.controller');
+const ClassController = require('../controllers/class.controller');
+const AttendanceController = require('../controllers/attendance.controller');
 const { authenticate, authorize } = require('../middlewares/auth.middleware');
 const { validateBody } = require('../middlewares/validation.middleware');
 const { uploadSingleOptional } = require('../middlewares/upload.middleware');
@@ -7,6 +9,8 @@ const { UserRole } = require('../constants/enums');
 
 const router = Router();
 const controller = new StudentController();
+const classController = new ClassController();
+const attendanceController = new AttendanceController();
 
 // Validation schemas
 const createStudentSchema = {
@@ -95,6 +99,30 @@ const updateStudentSchema = {
 // Protected routes (authentication required) - SPECIFIC ROUTES FIRST
 router.get('/profile', authenticate, controller.getMyProfile.bind(controller)); // Get my profile
 router.get('/me', authenticate, controller.getMyProfile.bind(controller)); // Get my profile (alternative endpoint)
+
+/**
+ * @route  GET /students/me/classes
+ * @desc   Get all classes the student belongs to (with schedules)
+ * @access Student
+ */
+router.get(
+  '/me/classes',
+  authenticate,
+  authorize(UserRole.STUDENT),
+  classController.getMyStudentClasses.bind(classController)
+);
+
+/**
+ * @route  GET /students/me/attendances
+ * @desc   Get all attendance records for the student
+ * @access Student
+ */
+router.get(
+  '/me/attendances',
+  authenticate,
+  authorize(UserRole.STUDENT),
+  attendanceController.getMyAttendances.bind(attendanceController)
+);
 
 // Public specific routes
 router.get('/user/:userId', controller.getByUserId.bind(controller)); // Get by user ID
