@@ -106,6 +106,21 @@ async function seedUsers() {
             role: UserRole.PARENT,
             status: UserStatus.ACTIVE,
         },
+        // Admin
+        {
+            email: 'admin@example.com',
+            password,
+            phone: '0988888888',
+            role: UserRole.ADMIN,
+            status: UserStatus.ACTIVE,
+        },
+        {
+            email: 'admin@gmail.com',
+            password,
+            phone: '0900000000',
+            role: UserRole.ADMIN,
+            status: UserStatus.ACTIVE,
+        },
     ];
 
     const createdUsers = await UserModel.insertMany(users);
@@ -611,6 +626,7 @@ async function runFullSeed() {
         console.log('   - tutor1@example.com (TUTOR)');
         console.log('   - student1@example.com (STUDENT)');
         console.log('   - parent1@example.com (PARENT)');
+        console.log('   - admin@example.com (ADMIN)');
     } catch (error) {
         console.error('❌ Full seed failed:', error);
         throw error;

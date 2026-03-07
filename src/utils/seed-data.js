@@ -1,6 +1,8 @@
 const SubjectModel = require('../models/subject.model');
 const GradeModel = require('../models/grade.model');
-const { EntityStatus } = require('../constants/enums');
+const UserModel = require('../models/user.model');
+const { hashPassword } = require('./hash');
+const { EntityStatus, UserRole, UserStatus } = require('../constants/enums');
 
 /**
  * Seed subjects data
@@ -62,12 +64,50 @@ const seedGrades = async () => {
 };
 
 /**
+ * Seed default admin account
+ */
+const seedAdminUser = async () => {
+  try {
+    const hashedPassword = await hashPassword('123456');
+
+    await UserModel.findOneAndUpdate(
+      { email: 'admin@gmail.com' },
+      {
+        email: 'admin@gmail.com',
+        password: hashedPassword,
+        phone: '0900000000',
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    await UserModel.findOneAndUpdate(
+      { email: 'admin@example.com' },
+      {
+        email: 'admin@example.com',
+        password: hashedPassword,
+        phone: '0988888888',
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    console.log('✅ Admin accounts seeded successfully (admin@gmail.com, admin@example.com)');
+  } catch (error) {
+    console.error('❌ Error seeding admin account:', error);
+  }
+};
+
+/**
  * Run all seeders
  */
 const runSeeders = async () => {
   try {
     await seedSubjects();
     await seedGrades();
+    await seedAdminUser();
     console.log('✅ All seed data loaded successfully');
   } catch (error) {
     console.error('❌ Error running seeders:', error);

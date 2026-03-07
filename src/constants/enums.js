@@ -8,12 +8,14 @@ const UserRole = {
     STUDENT: 1,
     TUTOR: 2,
     PARENT: 3,
+    ADMIN: 4,
 };
 
 const UserRoleLabel = {
     [UserRole.STUDENT]: 'STUDENT',
     [UserRole.TUTOR]: 'TUTOR',
     [UserRole.PARENT]: 'PARENT',
+    [UserRole.ADMIN]: 'ADMIN',
 };
 
 // User Status
