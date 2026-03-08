@@ -98,6 +98,96 @@ class UserService {
   }
 
   /**
+   * Request password reset - Send OTP to email
+   * @param {string} email - User email
+   * @returns {Promise<Object>} Success message
+   */
+  async requestPasswordReset(email) {
+    const user = await this.userRepo.findByEmail(email);
+    if (!user) {
+      const error = new Error('Email không tồn tại trong hệ thống');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const fullName = await this.getUserDisplayName(user);
+    await this.otpService.sendPasswordResetOtp(email, fullName);
+
+    return {
+      message: 'Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra.',
+    };
+  }
+
+  /**
+   * Reset password with OTP verification
+   * @param {string} email - User email
+   * @param {string} otp - OTP code
+   * @param {string} newPassword - New password
+   * @returns {Promise<Object>} Success message
+   */
+  async resetPasswordWithOtp(email, otp, newPassword) {
+    await this.otpService.verifyOtp(email, otp, 'FORGOT_PASSWORD');
+
+    const user = await this.userRepo.findByEmail(email);
+    if (!user) {
+      const error = new Error('Người dùng không tồn tại');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const hashedPassword = await hashPassword(newPassword);
+    await this.userRepo.updateById(user._id, { password: hashedPassword });
+
+    return {
+      message: 'Đặt mật khẩu mới thành công. Vui lòng đăng nhập.',
+    };
+  }
+
+  /**
+   * Resend forgot password OTP
+   * @param {string} email - User email
+   * @returns {Promise<Object>} Success message
+   */
+  async resendForgotPasswordOtp(email) {
+    const user = await this.userRepo.findByEmail(email);
+    if (!user) {
+      const error = new Error('Email không tồn tại trong hệ thống');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const fullName = await this.getUserDisplayName(user);
+    await this.otpService.resendPasswordResetOtp(email, fullName);
+
+    return {
+      message: 'Mã OTP đã được gửi lại đến email của bạn.',
+    };
+  }
+
+  /**
+   * Get display name for user (from profile)
+   */
+  async getUserDisplayName(user) {
+    try {
+      switch (user.role) {
+        case UserRole.STUDENT:
+          const student = await this.studentRepo.findByUserId(user._id);
+          return student?.fullName || user.email?.split('@')[0] || 'User';
+        case UserRole.TUTOR:
+          const tutor = await this.tutorRepo.findByUserId(user._id);
+          return tutor?.fullName || user.email?.split('@')[0] || 'User';
+        case UserRole.PARENT:
+          const parent = await this.parentRepo.findByUserId(user._id);
+          return parent?.fullName || user.email?.split('@')[0] || 'User';
+        default:
+          return user.email?.split('@')[0] || 'User';
+      }
+    } catch {
+      return user.email?.split('@')[0] || 'User';
+    }
+  }
+
+  /**
    * Resend OTP
    * @param {string} email - User email
    * @returns {Promise<Object>} Success message

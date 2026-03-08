@@ -60,6 +60,57 @@ class UserController {
     }
 
     /**
+     * Request password reset - Send OTP to email
+     * POST /users/forgot-password
+     */
+    async requestPasswordReset(req, res, next) {
+        try {
+            const { email } = req.body;
+            const result = await userService.requestPasswordReset(email);
+            return success(res, {
+                data: result,
+                message: result.message,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Reset password with OTP
+     * POST /users/reset-password
+     */
+    async resetPasswordWithOtp(req, res, next) {
+        try {
+            const { email, otp, newPassword } = req.body;
+            const result = await userService.resetPasswordWithOtp(email, otp, newPassword);
+            return success(res, {
+                data: result,
+                message: result.message,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Resend forgot password OTP
+     * POST /users/resend-forgot-password-otp
+     */
+    async resendForgotPasswordOtp(req, res, next) {
+        try {
+            const { email } = req.body;
+            const result = await userService.resendForgotPasswordOtp(email);
+            return success(res, {
+                data: result,
+                message: result.message,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
      * Create new user (Admin only - no OTP)
      * POST /users
      */

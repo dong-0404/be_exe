@@ -87,10 +87,44 @@ const resendOtpSchema = {
   },
 };
 
+const forgotPasswordSchema = {
+  required: ['email'],
+  fields: {
+    email: {
+      type: 'string',
+      pattern: /^\S+@\S+\.\S+$/,
+      patternMessage: 'Please provide a valid email address',
+    },
+  },
+};
+
+const resetPasswordSchema = {
+  required: ['email', 'otp', 'newPassword'],
+  fields: {
+    email: {
+      type: 'string',
+      pattern: /^\S+@\S+\.\S+$/,
+      patternMessage: 'Please provide a valid email address',
+    },
+    otp: {
+      type: 'string',
+      minLength: 4,
+      maxLength: 4,
+    },
+    newPassword: {
+      type: 'string',
+      minLength: 6,
+    },
+  },
+};
+
 // Public routes
 router.post('/register', validateBody(createUserSchema), controller.register.bind(controller));
 router.post('/verify-otp', validateBody(verifyOtpSchema), controller.verifyOtp.bind(controller));
 router.post('/resend-otp', validateBody(resendOtpSchema), controller.resendOtp.bind(controller));
+router.post('/forgot-password', validateBody(forgotPasswordSchema), controller.requestPasswordReset.bind(controller));
+router.post('/reset-password', validateBody(resetPasswordSchema), controller.resetPasswordWithOtp.bind(controller));
+router.post('/resend-forgot-password-otp', validateBody(forgotPasswordSchema), controller.resendForgotPasswordOtp.bind(controller));
 
 // Protected routes - Require authentication
 router.get('/me', authenticate, controller.getProfile.bind(controller));

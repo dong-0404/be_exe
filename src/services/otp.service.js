@@ -199,7 +199,7 @@ class OtpService {
 
             return {
                 success: true,
-                message: 'Password reset OTP sent successfully',
+                message: 'Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra.',
                 expiresAt,
             };
         } catch (error) {
@@ -209,7 +209,39 @@ class OtpService {
     }
 
     /**
-     * Clean up expired OTPs (can be run as cron job)
+     * Resend password reset OTP
+     */
+    async resendPasswordResetOtp(email, userName = 'User') {
+        try {
+            const recentOtp = await OtpModel.findOne({
+                email,
+                type: 'FORGOT_PASSWORD',
+                createdAt: { $gte: new Date(Date.now() - 60 * 1000) },
+            });
+            if (recentOtp) {
+                const error = new Error('Vui lòng đợi 1 phút trước khi gửi lại mã OTP');
+                error.statusCode = 429;
+                throw error;
+            }
+            await OtpModel.deleteMany({ email, type: 'FORGOT_PASSWORD' });
+            const otpCode = this.generateOtp();
+            const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+            await OtpModel.create({
+                email,
+                otp: otpCode,
+                type: 'FORGOT_PASSWORD',
+                expiresAt,
+            });
+            await this.emailService.sendPasswordResetEmail(email, otpCode, userName);
+            return { success: true, message: 'OTP đã được gửi lại', expiresAt };
+        } catch (error) {
+            if (error.statusCode) throw error;
+            throw new Error('Không thể gửi lại OTP');
+        }
+    }
+
+    /**
+     * Clean up expired OTPs (can be cron job)
      */
     async cleanupExpiredOtps() {
         try {

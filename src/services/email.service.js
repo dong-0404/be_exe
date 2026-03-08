@@ -458,6 +458,19 @@ class EmailService {
    */
   async sendPasswordResetEmail(to, otp, userName) {
     try {
+      // Development fallback: khi chưa cấu hình email, log OTP ra console để test
+      if (!config.email.sendgridApiKey || !this.isReady) {
+        console.log('');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('📧 [DEV MODE] Quên mật khẩu - Mã OTP (email chưa cấu hình):');
+        console.log(`   Email: ${to}`);
+        console.log(`   Mã OTP: ${otp}`);
+        console.log('   Cấu hình SENDGRID_API_KEY và EMAIL_FROM trong .env để gửi email thật.');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('');
+        return { success: true, messageId: 'dev-mode' };
+      }
+
       const mailOptions = {
         from: `"${config.email.fromName}" <${config.email.fromEmail}>`,
         to,
