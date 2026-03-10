@@ -1,22 +1,14 @@
 const userRoutes = require('./user.route');
-
 const authRoutes = require('./auth.route');
-
 const studentRoutes = require('./student.route');
-
 const tutorRoutes = require('./tutor.route');
-
 const uploadRoutes = require('./upload.route');
-
 const subjectRoutes = require('./subject.route');
-
 const gradeRoutes = require('./grade.route');
-
 const communityRoutes = require('./community.route');
-
 const { router: chatRoutes, setMessageController } = require('./chat.route');
-
 const notificationRoutes = require('./notification.route');
+const classRoutes = require('./class.route');
 
 /**
 
@@ -53,8 +45,10 @@ function registerRoutes(app) {
 
 
   // Tutor routes
-
   app.use(`${API_PREFIX}/tutors`, tutorRoutes);
+
+  // Class & schedule routes
+  app.use(`${API_PREFIX}/classes`, classRoutes);
 
 
 
