@@ -78,10 +78,16 @@ class UserService {
       throw error;
     }
 
-    // Create user with ACTIVE status
+    const role = Number(verifyResult.registrationData.role);
+
+    // Cơ chế duyệt gia sư:
+    // - TUTOR: tạo tài khoản ở trạng thái PENDING (chờ admin duyệt)
+    // - Role khác: ACTIVE như cũ
+    const initialStatus = role === UserRole.TUTOR ? UserStatus.PENDING : UserStatus.ACTIVE;
+
     const user = await this.userRepo.create({
       ...verifyResult.registrationData,
-      status: UserStatus.ACTIVE, // User is active immediately after OTP verify
+      status: initialStatus,
     });
 
     // Send welcome email

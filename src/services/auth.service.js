@@ -82,8 +82,10 @@ class AuthService {
       throw error;
     }
 
-    // Check if user is active
-    if (user.status !== UserStatus.ACTIVE) {
+    // Chỉ chặn khi tài khoản bị NGỪNG HOẠT ĐỘNG.
+    // Trạng thái PENDING (chờ duyệt) vẫn được phép đăng nhập,
+    // nhưng đã bị chặn ở các API tạo lớp / quản lý lớp bằng middleware khác.
+    if (user.status === UserStatus.INACTIVE) {
       const error = new Error('Account is deactivated. Please contact support.');
       error.statusCode = 403;
       throw error;

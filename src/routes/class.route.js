@@ -1,5 +1,6 @@
 const express = require('express');
 const { authenticate, authorize } = require('../middlewares/auth.middleware');
+const { requireApprovedTutor } = require('../middlewares/tutorApproval.middleware');
 const { validateBody } = require('../middlewares/validation.middleware');
 const { UserRole } = require('../constants/enums');
 const ClassController = require('../controllers/class.controller');
@@ -139,6 +140,7 @@ router.post(
   '/',
   authenticate,
   authorize(UserRole.TUTOR),
+  requireApprovedTutor,
   validateBody(createClassSchema),
   classController.createClass.bind(classController)
 );

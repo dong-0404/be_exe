@@ -44,7 +44,8 @@ class TutorController {
                     throw error;
                 }
 
-                if (user.status !== UserStatus.ACTIVE) {
+                // Cho phép gia sư đang chờ duyệt vẫn được điền hồ sơ theo luồng onboarding (email)
+                if (user.status === UserStatus.INACTIVE) {
                     const error = new Error('User account is not active');
                     error.statusCode = 403;
                     throw error;
@@ -89,7 +90,7 @@ class TutorController {
 
                 const user = await userService.getUserByEmail(email);
 
-                if (!user || user.status !== UserStatus.ACTIVE) {
+                if (!user || user.status === UserStatus.INACTIVE) {
                     const error = new Error('User not found or not active');
                     error.statusCode = 404;
                     throw error;
@@ -428,7 +429,7 @@ class TutorController {
 
                 const user = await userService.getUserByEmail(email);
 
-                if (!user || user.status !== UserStatus.ACTIVE) {
+                if (!user || user.status === UserStatus.INACTIVE) {
                     const error = new Error('User not found or not active');
                     error.statusCode = 404;
                     throw error;

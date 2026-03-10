@@ -7,7 +7,12 @@ const GradeModel = require('../models/grade.model');
 const CertificateModel = require('../models/certificate.model');
 const FeedbackModel = require('../models/feedback.model');
 const { comparePassword, hashPassword } = require('../utils/hash');
-const { UserRole, FeedbackAuthorRole } = require('../constants/enums');
+const {
+  UserRole,
+  UserStatus,
+  TutorProfileStatus,
+  FeedbackAuthorRole,
+} = require('../constants/enums');
 
 class AdminService {
   async getAdminProfile(userId) {
@@ -462,6 +467,25 @@ class AdminService {
       const error = new Error('Parent/Student status cannot be pending');
       error.statusCode = 400;
       throw error;
+    }
+
+    // Đối với gia sư: admin luôn có thể đổi trạng thái.
+    // Đồng thời đồng bộ profileStatus để phục vụ hiển thị/tạo lớp, nhưng KHÔNG chặn thao tác.
+    if (existingUser.role === UserRole.TUTOR) {
+      const tutor = await TutorModel.findOne({ userId }).select('profileStatus');
+
+      if (tutor) {
+        if (safeStatus === UserStatus.ACTIVE) {
+          // Khi admin kích hoạt tài khoản gia sư, coi như hồ sơ đã được duyệt
+          tutor.profileStatus = TutorProfileStatus.APPROVED;
+          await tutor.save();
+        } else if (safeStatus === UserStatus.PENDING) {
+          // Khi đưa về trạng thái chờ duyệt, đánh dấu hồ sơ ở trạng thái SUBMITTED
+          tutor.profileStatus = TutorProfileStatus.SUBMITTED;
+          await tutor.save();
+        }
+        // Với INACTIVE: giữ nguyên profileStatus hiện tại
+      }
     }
 
     const updated = await UserModel.findByIdAndUpdate(

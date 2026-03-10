@@ -3,6 +3,7 @@ const TutorController = require('../controllers/tutor.controller');
 const ClassController = require('../controllers/class.controller');
 const ScheduleController = require('../controllers/schedule.controller');
 const { authenticate, flexibleAuth, authorize } = require('../middlewares/auth.middleware');
+const { requireApprovedTutor } = require('../middlewares/tutorApproval.middleware');
 const { uploadMultiple, uploadSingleOptional } = require('../middlewares/upload.middleware');
 const { UserRole } = require('../constants/enums');
 
@@ -177,6 +178,7 @@ router.get(
   '/me/classes',
   authenticate,
   authorize(UserRole.TUTOR),
+  requireApprovedTutor,
   classController.getMyClasses.bind(classController)
 );
 
@@ -191,6 +193,7 @@ router.get(
   '/me/schedules',
   authenticate,
   authorize(UserRole.TUTOR),
+  requireApprovedTutor,
   scheduleController.getMySchedules.bind(scheduleController)
 );
 
@@ -203,6 +206,7 @@ router.get(
   '/me/students',
   authenticate,
   authorize(UserRole.TUTOR),
+  requireApprovedTutor,
   classController.getMyStudents.bind(classController)
 );
 

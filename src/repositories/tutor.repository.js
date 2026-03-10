@@ -1,4 +1,5 @@
 const TutorModel = require('../models/tutor.model');
+const { UserStatus } = require('../constants/enums');
 
 /**
  * Tutor Repository - Data Access Layer
@@ -24,7 +25,7 @@ class TutorRepository {
       isProfileComplete: true,
       profileStatus: 3, // APPROVED
     })
-      .populate('userId', 'email phone')
+      .populate({ path: 'userId', select: 'email phone status', match: { status: UserStatus.ACTIVE } })
       .populate('subjects', 'code name')
       .populate('grades', 'code name orderNumber')
       .lean();
@@ -174,17 +175,21 @@ class TutorRepository {
     sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
     // Execute query with pagination
-    const [tutors, total] = await Promise.all([
+    const [tutorsRaw, totalRaw] = await Promise.all([
       TutorModel.find(filter)
         .populate('subjects', 'code name')
         .populate('grades', 'code name orderNumber')
-        .populate('userId', 'email phone')
+        .populate({ path: 'userId', select: 'email phone status', match: { status: UserStatus.ACTIVE } })
         .sort(sort)
         .skip(skip)
         .limit(validLimit)
         .lean(),
       TutorModel.countDocuments(filter)
     ]);
+
+    // Loại các tutor có userId không ACTIVE (populate match sẽ trả null)
+    const tutors = tutorsRaw.filter((t) => t.userId);
+    const total = tutors.length < tutorsRaw.length ? tutors.length : totalRaw;
 
     return {
       tutors,
@@ -206,14 +211,14 @@ class TutorRepository {
     const validLimit = Math.min(MAX_LIMIT, Math.max(1, parseInt(limit)));
     const skip = (validPage - 1) * validLimit;
 
-    const [tutors, total] = await Promise.all([
+    const [tutorsRaw, totalRaw] = await Promise.all([
       TutorModel.find({
         isProfileComplete: true,
         profileStatus: 3  // APPROVED
       })
         .populate('subjects', 'code name')
         .populate('grades', 'code name orderNumber')
-        .populate('userId', 'email phone')
+        .populate({ path: 'userId', select: 'email phone status', match: { status: UserStatus.ACTIVE } })
         .sort({ averageRating: -1, createdAt: -1 })
         .skip(skip)
         .limit(validLimit)
@@ -223,6 +228,9 @@ class TutorRepository {
         profileStatus: 3
       })
     ]);
+
+    const tutors = tutorsRaw.filter((t) => t.userId);
+    const total = tutors.length < tutorsRaw.length ? tutors.length : totalRaw;
 
     return {
       tutors,
