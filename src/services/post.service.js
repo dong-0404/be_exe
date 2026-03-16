@@ -276,9 +276,10 @@ class PostService {
         }
 
         // Check authorization
-        // Only author can delete (admin role check can be added here)
+        // Chỉ tác giả hoặc admin mới được xóa
         const isAuthor = post.authorId.toString() === userId.toString();
-        const isAdmin = userRole === 0; // Assuming 0 is admin role
+        const { UserRole } = require('../constants/enums');
+        const isAdmin = userRole === UserRole.ADMIN;
 
         if (!isAuthor && !isAdmin) {
             const error = new Error(
