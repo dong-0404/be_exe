@@ -122,7 +122,7 @@ class TutorService {
             throw error;
         }
 
-        // Create profile with Step 1 data
+        // Create profile with Step 1 data (status 3 = APPROVED khi tạo mới)
         const profile = await this.tutorRepo.create({
             userId,
             fullName: profileData.fullName,
@@ -133,7 +133,7 @@ class TutorService {
             teachingArea: profileData.teachingArea,
             currentStep: 2,  // Move to step 2
             completedSteps: [1],  // Step 1 completed
-            profileStatus: TutorProfileStatus.DRAFT,
+            profileStatus: TutorProfileStatus.APPROVED,  // 3 - luôn APPROVED khi được tạo, không đổi khi update
         });
 
         return profile;
@@ -216,18 +216,13 @@ class TutorService {
             }
         }
 
-        // Check if all 4 steps completed
+        // Check if all 4 steps completed (không đổi profileStatus - giữ nguyên từ khi tạo)
         if (tutor.completedSteps.length === 4 &&
             tutor.completedSteps.includes(1) &&
             tutor.completedSteps.includes(2) &&
             tutor.completedSteps.includes(3) &&
             tutor.completedSteps.includes(4)) {
             tutor.isProfileComplete = true;
-            // Only set to SUBMITTED if profile is not already APPROVED
-            // If profile is already APPROVED, keep the current status
-            if (tutor.profileStatus !== TutorProfileStatus.APPROVED) {
-                tutor.profileStatus = TutorProfileStatus.SUBMITTED;
-            }
         }
 
         await tutor.save();
